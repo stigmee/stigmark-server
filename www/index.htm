@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stigmarks</title>
+</head>
+
+<body>
+    <h1>Stigmarks</h1>
+    <p>Download chrome extension <a href="/files/stigmarks.zip">here</a></p>
+    <div>
+        <button>test post</button>
+    </div>
+    <script>
+        const requestUrl = 'http://localhost:8000/api/v1/stigmarks';
+        const btnEl = document.querySelector('button');
+        if (btnEl) {
+            btnEl.addEventListener('click', () => {
+                console.log('click test post');
+
+                const body = JSON.stringify({url: "https://philippe-anel.fr"});
+                const requestData = {
+                    method: 'POST',
+                    // mode: 'no-cors',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json; charset=utf-8'
+                    },
+                    body: body,
+                };
+                fetch(requestUrl, requestData)
+                    .then(res => res.json())
+                    .then(res => console.log(res));
+            });
+        }
+    </script>
+</body>
+
+</html>

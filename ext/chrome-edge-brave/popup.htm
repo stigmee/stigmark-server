@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script type="module" src="popup.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            outline: none;
+            border: 0;
+        }
+
+        html {
+            background-color: #ccc;
+            color: #000;
+            padding: 5px;
+            min-width: 300px;
+            max-height: 200px;
+        }
+
+        button {
+            background-color: #000;
+            color: #fff;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        textarea {
+            resize: none;
+            background-color: #eee;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #055;
+        }
+
+        div + div {
+            margin-top: 5px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        div.right {
+            text-align: right;
+        }
+
+        li {
+            position: relative;
+        }
+
+        input + span {
+            padding-left: 5px;
+        }
+
+        em {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            text-overflow: ellipsis;
+            background-color: #fff;
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <h1>Stigmarks</h1>
+    </div>
+    <div>Please write associated keywords :</div>
+    <div>
+        <textarea rows=3 placeholder="keyword1, keyword2, keyword3, ..."></textarea>
+    </div>
+    <div>
+        <input id="onlySelected" type="checkbox"></input> Save only selected tabs
+    </div>
+    <div class="right">
+        <button>Send</button>
+    </div>
+    <div>Tabs/URLs to send :</div>
+    <div>
+        <ul></ul>
+    </div>
+</body>
+
+</html>
