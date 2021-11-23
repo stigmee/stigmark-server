@@ -3,20 +3,25 @@
 #[macro_use]
 extern crate rocket;
 
-// use rocket::http::Method;
+// rocket stuff
 use rocket::response::status::NotFound;
 use rocket::response::NamedFile;
 use rocket_contrib::json::Json;
-// use rocket_cors::{AllowedHeaders, AllowedMethods, AllowedOrigins, Guard, Responder};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
-use rocket::{Request, Response};
-use serde::Deserialize;
+use rocket::{Request, Response, State};
+
+// json, stigmark data
+use serde::{Serialize, Deserialize};
 use std::path::{Path, PathBuf};
 use std::vec::Vec;
 
-pub struct CORS;
+// thread stuff
+use std::sync::mpsc;
+use std::thread;
 
+// this is required by rocket to add cors headers
+pub struct CORS;
 impl Fairing for CORS {
     fn info(&self) -> Info {
         println!("Fairing::on_response");
@@ -38,6 +43,7 @@ impl Fairing for CORS {
     }
 }
 
+// GET https://stigmark.badro.com/
 #[get("/", rank = 1)]
 fn slash() -> Result<NamedFile, NotFound<String>> {
     println!("stigmarks: GET /");
@@ -45,6 +51,7 @@ fn slash() -> Result<NamedFile, NotFound<String>> {
     NamedFile::open(&path).map_err(|e| NotFound(e.to_string()))
 }
 
+// GET https://stigmark.badro.com/*
 #[get("/<file..>", rank = 2)]
 fn others(file: PathBuf) -> Result<NamedFile, NotFound<String>> {
     println!("stigmarks: GET {:?}", file);
@@ -65,14 +72,16 @@ struct Stigmark {
     keys: Vec<String>,
 }
 
+// OPTIONS https://stigmark.badro.com/api/v1/stigmarks
 #[options("/stigmarks")]
 fn stigmarks_options() {
     println!("stigmarks: OPTIONS /api/v1/stigmarks");
 }
 
+// POST https://stigmark.badro.com/api/v1/stigmarks
 #[post("/stigmarks", format = "json", data = "<mark>")]
-fn stigmarks_mark(mark: Json<Stigmark>) {
-    println!("stigmarks: POST /api/v1/stigmarks: {:?} {:?}", mark.urls, mark.keys);
+fn stigmarks_mark(tx: State<mpsc::SyncSender<Stigmark>>, mark: Json<Stigmark>) {
+    tx.send(mark.0).unwrap()
 }
 
 // #[delete("/stigmarks", format = "json", data = "<mark>")]
@@ -80,10 +89,45 @@ fn stigmarks_mark(mark: Json<Stigmark>) {
 //     println!("stigmarks: DELETE /api/v1/stigmarks: {}", mark.url);
 // }
 
-// main
+#[derive(Serialize, Deserialize)]
+struct StigmarkDB {
+    groups: Vec<StigmarkGroup>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct StigmarkGroup {
+    gid: u32,
+    urls: Vec<StigmarkURL>,
+    stigmarks: Vec<StigmarkMarks>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct StigmarkURL {
+    uid: u32,
+    url: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct StigmarkMarks {
+    urls: Vec<u32>,
+    keywords: Vec<String>,
+}
+
+// handles json database
+fn save_stigmarks_service(rx: mpsc::Receiver<Stigmark>) {
+    loop {
+        let mark = rx.recv().unwrap();
+        println!("stigmarks: POST /api/v1/stigmarks: {:?} {:?}", mark.urls, mark.keys);
+    }
+}
 
 fn main() {
+    // start service thread
+    let (tx, rx): (mpsc::SyncSender<Stigmark>, mpsc::Receiver<Stigmark>) = mpsc::sync_channel(256);
+    thread::spawn(move || { save_stigmarks_service(rx) });
+
     rocket::ignite()
+        .manage(tx)
         .attach(CORS)
         .mount(
             "/api/v1",
