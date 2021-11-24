@@ -1,4 +1,4 @@
-const requestUrl = 'http://localhost:8000/api/v1/stigmarks';
+const requestUrl = 'https://stigmark.badro.fr/api/v1/stigmarks';
 
 const port = chrome.runtime.connect({ name: 'stigmark' });
 
