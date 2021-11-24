@@ -1,4 +1,4 @@
-const serverAddr = 'http://localhost:8000';
+const serverAddr = 'http://localhost:3000';
 // const serverAddr = 'https://stigmark.badro.fr';
 
 const requestUrl = `${serverAddr}/api/v1/stigmarks`;
@@ -155,21 +155,27 @@ async function init_login() {
     guestBtnEl.addEventListener('click', async (evt) => {
         debug_log('clicked guest');
         evt.preventDefault();
-        const res = await login('', '');
-        if (res !== false) {
+        const token = await login('', '');
+        if (token !== false) {
             signinEl.classList.add("hidden");
             appEl.classList.remove("hidden");
+            init_app(token);
+            return;
         }
+        // handle error
     });
 
     loginBtnEl.addEventListener('click', async (evt) => {
         debug_log('clicked login');
         evt.preventDefault();
-        const res = await login(emailEl.value, passwordEl.value)
-        if (res !== false) {
+        const token = await login(emailEl.value, passwordEl.value)
+        if (token !== false) {
             signinEl.classList.add("hidden");
             appEl.classList.remove("hidden");
+            init_app(token);
+            return;
         }
+        // handle error
     });
 }
 
