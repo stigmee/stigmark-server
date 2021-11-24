@@ -5,6 +5,7 @@ extern crate rocket;
 extern crate bcrypt;
 
 // rocket stuff
+use rocket::config::{Config, Environment};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::{Header, Status};
 use rocket::response::status::NotFound;
@@ -212,7 +213,8 @@ fn save_stigmarks_service(rx: mpsc::Receiver<StigmarkRequest>) {
                 uid = stigmark_db.groups[0].urls.len() as u32;
                 stigmark_db.groups[0]
                     .urls
-                    .push(StigmarkURL { uid: uid, url: u });
+                    .push(StigmarkURL { uid: uid, url: u.clone() });
+                println!("stigmark: added url {}:{}", uid, u);
             }
             urls.push(uid);
         }
@@ -235,7 +237,12 @@ fn main() {
     ) = mpsc::sync_channel(256);
     thread::spawn(move || save_stigmarks_service(rx));
 
-    rocket::ignite()
+    let config = Config::build(Environment::Staging)
+        .address("0.0.0.0")
+        .port(3000)
+        .finalize().unwrap();
+
+    rocket::custom(config)    
         .manage(tx)
         .attach(CORS)
         .mount(
