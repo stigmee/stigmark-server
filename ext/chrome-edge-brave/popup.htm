@@ -9,6 +9,7 @@
             padding: 0;
             outline: none;
             border: 0;
+            font-size: 14px;
         }
 
         html {
@@ -36,12 +37,24 @@
             background-color: #055;
         }
 
-        div + div {
+        input, textarea {
+            padding: 3px;
+        }
+
+        div+div, div+input, input+div, input+input, h2+input {
             margin-top: 5px;
         }
 
         h1 {
             text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        h2 {
+            text-align: left;
+            font-size: 14px;
+            font-weight: bold;
         }
 
         div.right {
@@ -52,7 +65,7 @@
             position: relative;
         }
 
-        input + span {
+        input+span {
             padding-left: 5px;
         }
 
@@ -65,6 +78,14 @@
             background-color: #fff;
             overflow-x: hidden;
         }
+
+        form > * {
+            width: 100%;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 
@@ -72,19 +93,35 @@
     <div>
         <h1>Stigmarks</h1>
     </div>
-    <div>Please write associated keywords :</div>
-    <div>
-        <textarea rows=3 placeholder="keyword1, keyword2, keyword3, ..."></textarea>
+
+    <div id="signin" class="hidden">
+        <form>
+            <h2>Please login first:</h2>
+            <input id="email" type="text" placeholder="name@domain.ltd" />
+            <input id="password" type="password" placeholder="password" />
+            <div><a href="https://stigmark.badro.fr">forgot password ?</a></div>
+            <div class="right">
+                <button id="guest">Login as guest</button>
+                <button id="login">Login</button>
+            </div>
+        </form>
     </div>
-    <div>
-        <input id="onlySelected" type="checkbox"></input> Save only selected tabs
-    </div>
-    <div class="right">
-        <button>Send</button>
-    </div>
-    <div>Tabs/URLs to send :</div>
-    <div>
-        <ul></ul>
+
+    <div id="app" class="hidden">
+        <div>Please write associated keywords :</div>
+        <div>
+            <textarea rows=3 placeholder="keyword1, keyword2, keyword3, ..."></textarea>
+        </div>
+        <div>
+            <input id="onlySelected" type="checkbox"></input> Save only selected tabs
+        </div>
+        <div class="right">
+            <button id="send">Send</button>
+        </div>
+        <div>Tabs/URLs to send :</div>
+        <div>
+            <ul></ul>
+        </div>
     </div>
 </body>
 

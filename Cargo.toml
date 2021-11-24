@@ -8,7 +8,7 @@ rocket = "0.4.10"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 rocket_cors = "0.5.2"
-md5 = "*"
+bcrypt = "0.10.1"
 
 [dependencies.rocket_contrib]
 version = "0.4.10"

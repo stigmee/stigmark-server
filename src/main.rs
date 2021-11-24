@@ -2,10 +2,11 @@
 
 #[macro_use]
 extern crate rocket;
+extern crate bcrypt;
 
 // rocket stuff
 use rocket::fairing::{Fairing, Info, Kind};
-use rocket::http::Header;
+use rocket::http::{Header, Status};
 use rocket::response::status::NotFound;
 use rocket::response::NamedFile;
 use rocket::{Request, Response, State};
@@ -23,6 +24,9 @@ use std::thread;
 // file stuff
 use std::fs::File;
 use std::io::BufReader;
+
+// byte -> hex formating
+use std::fmt::Write;
 
 // this is required by rocket to add cors headers
 pub struct CORS;
@@ -71,9 +75,38 @@ fn others(file: PathBuf) -> Result<NamedFile, NotFound<String>> {
 // }
 
 #[derive(Deserialize)]
-struct Stigmark {
+struct LoginRequest {
+    email: String,
+    passwd: String,
+}
+
+#[derive(Serialize)]
+struct LoginResult {
+    token: String,
+}
+
+#[options("/login")]
+fn login_options() {
+    println!("stigmarks: OPTIONS /api/v1/login");
+}
+
+#[post("/login", format = "json", data = "<req>")]
+fn login_post(req: Json<LoginRequest>) -> Status {
+    let passwd = &req.passwd;
+    let hash = bcrypt::hash(passwd, 6).unwrap();
+    let mut hash_string = String::new();
+    for byte in hash.bytes() {
+        write!(&mut hash_string, "{:X}", byte).expect("Unable to write");
+    }
+    println!("user: {} -> {}", req.email, hash_string);
+    Status::Ok
+}
+
+#[derive(Deserialize)]
+struct StigmarkRequest {
     urls: Vec<String>,
     keys: Vec<String>,
+    token: String,
 }
 
 // OPTIONS https://stigmark.badro.com/api/v1/stigmarks
@@ -84,8 +117,15 @@ fn stigmarks_options() {
 
 // POST https://stigmark.badro.com/api/v1/stigmarks
 #[post("/stigmarks", format = "json", data = "<mark>")]
-fn stigmarks_mark(tx: State<mpsc::SyncSender<Stigmark>>, mark: Json<Stigmark>) {
-    tx.send(mark.0).unwrap()
+fn stigmarks_post(
+    tx: State<mpsc::SyncSender<StigmarkRequest>>,
+    mark: Json<StigmarkRequest>,
+) -> Status {
+    if mark.token != "foo" {
+        return Status::Unauthorized;
+    }
+    tx.send(mark.0).unwrap();
+    Status::Ok
 }
 
 // #[delete("/stigmarks", format = "json", data = "<mark>")]
@@ -126,7 +166,7 @@ fn read_db_from_json(name: &str) -> Result<StigmarkDB, String> {
                 Ok(db) => Ok(db),
                 Err(err) => Err(format!("{}", err)),
             }
-        },
+        }
         Err(err) => Err(format!("{}", err)),
     }
 }
@@ -139,16 +179,18 @@ fn write_db_to_json(name: &str, db: &StigmarkDB) {
 const STIGMARK_FILE_NAME: &str = "data/stigmarks.json";
 
 // handles json database
-fn save_stigmarks_service(rx: mpsc::Receiver<Stigmark>) {
+fn save_stigmarks_service(rx: mpsc::Receiver<StigmarkRequest>) {
     let mut stigmark_db = match read_db_from_json(STIGMARK_FILE_NAME) {
         Ok(stigmark_db) => stigmark_db,
         Err(_) => {
             let group0 = StigmarkGroup {
                 gid: 1,
-                urls: vec!(),
-                stigmarks: vec!(),
+                urls: vec![],
+                stigmarks: vec![],
             };
-            StigmarkDB { groups: vec![group0] }
+            StigmarkDB {
+                groups: vec![group0],
+            }
         }
     };
 
@@ -187,7 +229,10 @@ fn save_stigmarks_service(rx: mpsc::Receiver<Stigmark>) {
 
 fn main() {
     // start service thread
-    let (tx, rx): (mpsc::SyncSender<Stigmark>, mpsc::Receiver<Stigmark>) = mpsc::sync_channel(256);
+    let (tx, rx): (
+        mpsc::SyncSender<StigmarkRequest>,
+        mpsc::Receiver<StigmarkRequest>,
+    ) = mpsc::sync_channel(256);
     thread::spawn(move || save_stigmarks_service(rx));
 
     rocket::ignite()
@@ -195,11 +240,7 @@ fn main() {
         .attach(CORS)
         .mount(
             "/api/v1",
-            routes![
-                stigmarks_options,
-                stigmarks_mark,
-                // stigmarks_unmark,
-            ],
+            routes![login_options, stigmarks_options, login_post, stigmarks_post],
         )
         .mount("/", routes![slash, others])
         .launch();
