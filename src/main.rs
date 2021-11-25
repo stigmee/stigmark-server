@@ -29,6 +29,10 @@ use std::io::BufReader;
 // byte -> hex formating
 use std::fmt::Write;
 
+// backup stuff
+use chrono::{Datelike, Timelike, Utc};
+const MAX_UPDATES_BEFORE_SAVING: u32 = 5;
+
 // this is required by rocket to add cors headers
 pub struct CORS;
 impl Fairing for CORS {
@@ -195,8 +199,25 @@ fn save_stigmarks_service(rx: mpsc::Receiver<StigmarkRequest>) {
         }
     };
 
+    let mut updates_before_backup = MAX_UPDATES_BEFORE_SAVING;
     loop {
         let mark = rx.recv().unwrap();
+
+        updates_before_backup -= 1;
+        if updates_before_backup == 0 {
+            updates_before_backup = MAX_UPDATES_BEFORE_SAVING;
+            let now = Utc::now();
+            let backup_name = format!(
+                "data/stigmarks-{}-{}-{}-{}-{}-{}.json",
+                now.year(),
+                now.month(),
+                now.day(),
+                now.hour(),
+                now.minute(),
+                now.second()
+            );
+            write_db_to_json(backup_name.as_str(), &stigmark_db);
+        }
 
         let mut urls = vec![]; // urls uids
         for u in mark.urls {
@@ -211,9 +232,10 @@ fn save_stigmarks_service(rx: mpsc::Receiver<StigmarkRequest>) {
             // if not in db, add it
             if !found {
                 uid = stigmark_db.groups[0].urls.len() as u32;
-                stigmark_db.groups[0]
-                    .urls
-                    .push(StigmarkURL { uid: uid, url: u.clone() });
+                stigmark_db.groups[0].urls.push(StigmarkURL {
+                    uid: uid,
+                    url: u.clone(),
+                });
                 println!("stigmark: added url {}:{}", uid, u);
             }
             urls.push(uid);
@@ -240,9 +262,10 @@ fn main() {
     let config = Config::build(Environment::Staging)
         .address("0.0.0.0")
         .port(8000)
-        .finalize().unwrap();
+        .finalize()
+        .unwrap();
 
-    rocket::custom(config)    
+    rocket::custom(config)
         .manage(tx)
         .attach(CORS)
         .mount(
