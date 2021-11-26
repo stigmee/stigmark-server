@@ -1,5 +1,5 @@
-// const serverAddr = 'http://localhost:3000';
-const serverAddr = 'https://stigmark.badro.fr';
+const serverAddr = 'http://localhost:8000';
+// const serverAddr = 'https://stigmark.badro.fr';
 
 const requestUrl = `${serverAddr}/api/v1/stigmarks`;
 const loginUrl = `${serverAddr}/api/v1/login`;
@@ -113,10 +113,7 @@ async function login(email, passwd) {
         debug_log(res);
         if (res.status >= 200 && res.status < 300) {
             debug_log('logged in');
-            // const token = await res.json();
-            // debug_log(token);
-            // return token.token;
-
+            // TODO: extract token from answer
             return "foo";
         }
         debug_log(`fetch failed with ${res.status}`);
@@ -156,7 +153,12 @@ async function init_login() {
         debug_log('clicked guest');
         evt.preventDefault();
         const token = await login('', '');
+        debug_log('token');
+        debug_log(token);
         if (token !== false) {
+            await chrome.storage.local.set({token: 'blah'});
+            const res = await chrome.storage.local.get('token');
+            debug_log(res);
             signinEl.classList.add("hidden");
             appEl.classList.remove("hidden");
             init_app(token);
@@ -180,7 +182,8 @@ async function init_login() {
 }
 
 async function is_logged() {
-    const res = await chrome.storage.local.get('stigmark-token');
+    debug_log('is_logged');
+    const res = await chrome.storage.local.get('token');
     debug_log(res);
     if (typeof res.token !== "string" || res.token === "") {
         debug_log('not logged');
