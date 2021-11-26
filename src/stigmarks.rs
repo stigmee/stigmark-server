@@ -44,11 +44,6 @@ fn stigmarks_post(tx: State<mpsc::SyncSender<StigmarkData>>, mark: Json<Stigmark
     Status::Ok
 }
 
-pub fn stigmarks_routes() -> Vec<Route> {
+pub fn routes() -> Vec<Route> {
     routes![stigmarks_options, stigmarks_post]
 }
-
-// #[delete("/stigmarks", format = "json", data = "<mark>")]
-// fn stigmarks_unmark(mark: Json<Stigmark>) {
-//     println!("stigmarks: DELETE /api/v1/stigmarks: {}", mark.url);
-// }

@@ -21,6 +21,7 @@ pub struct StigmerService {
     // todo: RWMutex
 }
 
+#[allow(dead_code)]
 impl StigmerService {
     pub fn new(path: &str) -> StigmerService {
         StigmerService{

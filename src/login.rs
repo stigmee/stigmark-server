@@ -32,6 +32,6 @@ fn login_post(req: Json<LoginRequest>) -> Status {
     Status::Ok
 }
 
-pub fn login_routes() -> Vec<Route> {
+pub fn routes() -> Vec<Route> {
     routes![login_options, login_post]
 }
