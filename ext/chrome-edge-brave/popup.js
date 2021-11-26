@@ -93,6 +93,8 @@ async function init_app(token) {
 
         const keywords = keywordsEl.value.split(/[ \t]*,[ \t]*/g)
         await send_urls_and_keywords(token, urls, keywords);
+
+        window.close();
     });
 }
 
@@ -193,20 +195,29 @@ async function is_logged() {
     return res.token;
 }
 
-let once = false;
 window.addEventListener('load', async () => {
-    debug_log(`onload: once=${once}`);
-    if (once)
-        return;
-    once = true;
-
     const signinEl = document.querySelector('#signin');
-    if (!signinEl)
+    if (!signinEl) {
+        debug_log('#signin not found');
         return;
+    }
 
     const appEl = document.querySelector('#app');
-    if (!appEl)
+    if (!appEl) {
+        debug_log('#app not found');
         return;
+    }
+
+    const logoutEl = document.querySelector('#logout');
+    if (!logoutEl) {
+        debug_log('#logout not found');
+        return;
+    }
+    logoutEl.addEventListener('click', async (evt) => {
+        evt.preventDefault();
+        await chrome.storage.local.remove('token');
+        window.close();
+    });
 
     const token = await is_logged();
     if (!token) {
