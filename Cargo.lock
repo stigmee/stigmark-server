@@ -845,6 +845,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rocket-basicauth"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6ef1e8ae805ec270607d59ea675f500f57be286a59d3a2f481148d931ccacd7"
+dependencies = [
+ "base64 0.13.0",
+ "rocket",
+]
+
+[[package]]
 name = "rocket_codegen"
 version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -992,9 +1002,11 @@ checksum = "3015a7d0a5fd5105c91c3710d42f9ccf0abfb287d62206484dcc67f9569a6483"
 name = "stigmark-rocket-rs"
 version = "0.1.0"
 dependencies = [
+ "base64 0.13.0",
  "bcrypt",
  "chrono",
  "rocket",
+ "rocket-basicauth",
  "rocket_contrib",
  "rocket_cors",
  "serde",
