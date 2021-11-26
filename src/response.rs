@@ -7,6 +7,7 @@ use std::path::Path;
 
 #[derive(Debug)]
 pub enum ServerResponse {
+    Ok(),
     File(NamedFile),
     Json(JsonValue),
     Error(Status),
@@ -14,6 +15,10 @@ pub enum ServerResponse {
 }
 
 impl ServerResponse {
+    pub fn ok() -> Self {
+        Self::Ok()
+    }
+
     pub fn file(file: &Path) -> Self {
         match NamedFile::open(file) {
             Ok(file) => Self::File(file),
@@ -35,6 +40,7 @@ impl<'r>  Responder<'r> for ServerResponse {
     fn respond_to(self, _request: &Request) -> response::Result<'r> {
         let mut res = Response::build();
         match self {
+            Self::Ok() => res.status(Status::Ok),
             Self::File(file) => res.sized_body(file),
             Self::Error(status) => res.status(status),
             Self::BasicAuth() => {

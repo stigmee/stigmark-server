@@ -3,6 +3,7 @@ use serde::{Deserialize};
 use rocket::{State, Route};
 use rocket_contrib::json::Json;
 use rocket::http::Status;
+use crate::response::ServerResponse;
 
 #[derive(Deserialize)]
 struct StigmarkRequest {
@@ -18,19 +19,19 @@ pub struct StigmarkData {
 }
 
 // OPTIONS https://stigmark.badro.com/api/v1/stigmarks
-#[options("/stigmarks")]
-fn stigmarks_options() {
-    println!("stigmarks: OPTIONS /api/v1/stigmarks");
+#[options("/stigmarks", rank = 1)]
+fn stigmarks_options() -> ServerResponse {
+    ServerResponse::ok()
 }
 
 // POST https://stigmark.badro.com/api/v1/stigmarks
-#[post("/stigmarks", format = "json", data = "<mark>")]
+#[post("/stigmarks", format = "json", data = "<mark>", rank = 1)]
 fn stigmarks_post(tx: State<mpsc::SyncSender<StigmarkData>>, mark: Json<StigmarkRequest>) -> Status {
     match &mark.token {
-        Some(token) => {
-            if token != "foo" {
-                return Status::Unauthorized;
-            }
+        Some(_token) => {
+            // if token != "foo" {
+            //     return Status::Unauthorized;
+            // }
         },
         None => {
             return Status::Unauthorized;

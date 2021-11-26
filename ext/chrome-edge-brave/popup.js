@@ -1,5 +1,5 @@
-const serverAddr = 'http://localhost:8000';
-// const serverAddr = 'https://stigmark.badro.fr';
+// const serverAddr = 'http://localhost:8000';
+const serverAddr = 'https://stigmark.badro.fr';
 
 const requestUrl = `${serverAddr}/api/v1/stigmarks`;
 const loginUrl = `${serverAddr}/api/v1/login`;

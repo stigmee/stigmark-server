@@ -3,6 +3,7 @@ use rocket::http::{Status};
 use rocket_contrib::json::Json;
 use std::fmt::Write;
 use rocket::Route;
+use crate::response::ServerResponse;
 
 #[derive(Deserialize)]
 struct LoginRequest {
@@ -16,8 +17,8 @@ struct LoginResult {
 }
 
 #[options("/login")]
-fn login_options() {
-    println!("stigmarks: OPTIONS /api/v1/login");
+fn login_options() ->ServerResponse {
+    ServerResponse::ok()
 }
 
 #[post("/login", format = "json", data = "<req>")]

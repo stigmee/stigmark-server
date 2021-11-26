@@ -12,6 +12,8 @@ impl BasicAuth {
     /// Creates a new [BasicAuth] struct/request guard from a given plaintext
     /// http auth header or returns a [Option::None] if invalid
     pub fn new<T: Into<String>>(auth_header: T) -> Option<Self> {
+        println!("BasicAuth::new");
+        
         let key = auth_header.into();
         if key.len() < 7 || &key[..6] != "Basic " {
             return None;
@@ -22,7 +24,12 @@ impl BasicAuth {
             Err(err) => format!("failed to decode {}", err),
         };
 
-        let (name, pass) = decoded.split_once(":").unwrap();
+        let (name, pass) = match decoded.split_once(":") {
+            Some((name, pass)) => (name, pass),
+            None => ("", ""),
+        };
+
+        println!("BasicAuth: {}/{}", name, pass);
 
         Some(Self {
             name: String::from(name),

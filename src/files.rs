@@ -5,7 +5,7 @@ use crate::response::ServerResponse;
 use crate::basicauth::BasicAuth;
 
 // GET https://stigmark.badro.com/
-#[get("/", rank = 1)]
+#[get("/", rank = 2)]
 fn files_slash(auth: BasicAuth) -> ServerResponse {
     println!("stigmarks: '{}' GET /", auth.name);
     if auth.name != "stigmer" || auth.pass != "tabarnak" {
@@ -16,7 +16,7 @@ fn files_slash(auth: BasicAuth) -> ServerResponse {
 }
 
 // GET https://stigmark.badro.com/*
-#[get("/<file..>", rank = 2)]
+#[get("/<file..>", rank = 3)]
 fn files_others(auth: BasicAuth, file: PathBuf) -> ServerResponse {
     println!("stigmarks: '{}' GET {:?}", auth.name, file);
     if auth.name != "stigmer" || auth.pass != "tabarnak" {

@@ -59,7 +59,7 @@ fn main() {
     rocket::custom(config)
         .manage(tx)
         .attach(CORS)
-        .mount("/api/v1", api_routes)
         .mount("/", files::routes())
+        .mount("/api/v1", api_routes)
         .launch();
 }

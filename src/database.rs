@@ -4,6 +4,7 @@ use std::sync::mpsc;
 // file stuff
 use std::fs::File;
 use std::io::BufReader;
+use std::path::Path;
 
 // json stuff
 use serde::{Deserialize, Serialize};
@@ -37,6 +38,7 @@ struct StigmarkEntry {
     user: u32,
     urls: Vec<u32>,
     keywords: Vec<String>,
+    // todo: add hidden/publish bool ?
 }
 
 fn read_db_from_json(name: &str) -> Result<StigmarkDB, String> {
@@ -84,14 +86,21 @@ pub fn save_stigmarks_service(rx: mpsc::Receiver<StigmarkData>) {
         if updates_before_backup == 0 {
             updates_before_backup = MAX_UPDATES_BEFORE_SAVING;
             let now = Utc::now();
+            let path = Path::new(STIGMARK_FILE_NAME);
+            let parent = path.parent().unwrap();
+            let stem = path.file_stem().unwrap();
+            let ext = path.extension().unwrap();
             let backup_name = format!(
-                "data/stigmarks-{}-{}-{}-{}-{}-{}.json",
+                "{:?}/{:?}-{}-{}-{}-{}-{}-{}.{:?}",
+                parent,
+                stem,
                 now.year(),
                 now.month(),
                 now.day(),
                 now.hour(),
                 now.minute(),
-                now.second()
+                now.second(),
+                ext,
             );
             write_db_to_json(backup_name.as_str(), &stigmark_db);
         }
