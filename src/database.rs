@@ -2,7 +2,7 @@
 use std::sync::mpsc;
 
 // file stuff
-use std::fs::File;
+use std::fs::{File, create_dir_all};
 use std::io::BufReader;
 use std::path::Path;
 
@@ -64,6 +64,10 @@ const STIGMARK_FILE_NAME: &str = "data/stigmarks.json";
 
 // handles json database
 pub fn save_stigmarks_service(rx: mpsc::Receiver<StigmarkData>) {
+    let p = Path::new(STIGMARK_FILE_NAME);
+    let d = p.parent().unwrap();
+    create_dir_all(d).unwrap();
+
     let mut stigmark_db = match read_db_from_json(STIGMARK_FILE_NAME) {
         Ok(stigmark_db) => stigmark_db,
         Err(_) => {
