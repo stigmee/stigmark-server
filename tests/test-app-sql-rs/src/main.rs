@@ -10,4 +10,10 @@ fn main() {
         Ok(users) => println!("{:?}", users),
         Err(err) => eprintln!("get_all_users failed: {}", err),
     }
+
+    let user_1 = stigmarks_db.get_user_by_id(1);
+    match user_1 {
+        Ok(user) => println!("{:?}", user),
+        Err(err) => eprintln!("get_user_by_id failed: {}", err),
+    }
 }
