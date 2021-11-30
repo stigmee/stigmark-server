@@ -42,6 +42,9 @@ cargo run
 ![step 4](/docs/img/snip-4.png)
 ![step 5](/docs/img/snip-5.png)
 
+### test
+
+In test directory, you'll find rust tests lib+app
 
 ### Bugs 
 
