@@ -4,7 +4,8 @@ pub struct SqlStigmarksDB {
     conn: mysql::PooledConn,
 }
 
-mod users;
+pub mod users;
+pub mod collections;
 
 #[allow(dead_code)]
 impl SqlStigmarksDB {
