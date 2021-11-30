@@ -18,4 +18,8 @@ impl SqlStigmarksDB {
             conn,
         }
     }
+
+    pub fn init() {
+        // todo: init sql table from '../../../../sql/stigmarks.sql'
+    }
 }

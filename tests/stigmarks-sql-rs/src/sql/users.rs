@@ -1,11 +1,45 @@
 use mysql::prelude::{Queryable};
 use mysql::{params};
+use mysql::chrono::NaiveDateTime;
 
-use crate::SqlUser;
 pub use crate::sql::SqlStigmarksDB;
+
+/*
+CREATE TABLE IF NOT EXISTS `users` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `name` varchar(256) NOT NULL,
+    `email` varchar(256) NOT NULL UNIQUE,
+    `hash` binary(255) NOT NULL,
+    `creation_date` datetime NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (`id`)
+);
+*/
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SqlUser {
+    id: u32,
+    name: String,
+    email: String,
+    // hidden: hash: Vec<u8>,
+    creation_date: NaiveDateTime,
+}
 
 #[allow(dead_code)]
 impl SqlStigmarksDB {
+    pub fn add_user(self: &mut Self, name: String, email: String, pass: Vec<u8>) -> Result<u32, String> {
+        match self.conn.exec_drop(
+            r"INSERT INTO users (name, email, hash) VALUES (:name, :email, :hash)",
+            params! {
+                    "name" => name,
+                    "email" => email,
+                    "hash" => pass,
+            },
+        ) {
+            Ok(_) => Ok(self.conn.last_insert_id() as u32),
+            Err(err) => Err(format!("insert.err: {}", err)),
+        }
+    }
+
     // todo: -> Result<SqlUser, Error>
     pub fn get_user_by_id(self: &mut Self, user_id: u32) -> Result<SqlUser, String> {
         match self.conn.exec_first(
