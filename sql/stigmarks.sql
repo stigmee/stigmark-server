@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 CREATE TABLE IF NOT EXISTS `keywords` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `keyword` varchar(256) NOT NULL,
+    `ref_count` int(11) NOT NULL DEFAULT 1,
     PRIMARY KEY (`id`),
     UNIQUE KEY `keyword` (`keyword`)
 );
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS `keywords` (
 CREATE TABLE IF NOT EXISTS `urls` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `url` varchar(2048) NOT NULL,
+    `ref_count` int(11) NOT NULL DEFAULT 1,
     PRIMARY KEY (`id`),
     UNIQUE KEY `url` (`url`) USING HASH
 );
