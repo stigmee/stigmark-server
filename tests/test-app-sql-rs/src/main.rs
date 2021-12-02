@@ -82,14 +82,28 @@ fn main() {
     println!("get_all_collections");
     let all_collections = stigmarks_db.get_all_collections();
     match all_collections {
-        Ok(collections) => println!("\t{:?}", collections),
+        Ok(collections) => {
+            for collection in &collections {
+                println!("\t{:?}", collection);
+                let collection_keywords = stigmarks_db.get_collection_keywords_by_id(collection.id);
+                match collection_keywords {
+                    Ok(keywords) => println!("\t\t{:?}", keywords),
+                    Err(err) => eprintln!("\t\tfailed: {}", err),
+                }
+                let collection_urls = stigmarks_db.get_collection_urls_by_id(collection.id);
+                match collection_urls {
+                    Ok(urls) => println!("\t\t{:?}", urls),
+                    Err(err) => eprintln!("\t\tfailed: {}", err),
+                }
+            }
+        },
         Err(err) => eprintln!("\tfailed: {}", err),
     }
 
     println!("get_collection_by_id");
     let collection_1 = stigmarks_db.get_collection_by_id(1);
     match collection_1 {
-        Ok(collection) => println!("{:?}", collection),
-        Err(err) => eprintln!("get_collection_by_id failed: {}", err),
+        Ok(collection) => println!("\t{:?}", collection),
+        Err(err) => eprintln!("\tfailed: {}", err),
     }
 }

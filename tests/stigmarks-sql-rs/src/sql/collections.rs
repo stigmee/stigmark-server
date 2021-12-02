@@ -41,10 +41,10 @@ CREATE TABLE IF NOT EXISTS `collections` (
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct SqlCollection {
-    id: u32,
-    user_id: u32,
-    creation_date: mysql::chrono::NaiveDateTime,
-    hidden: bool,
+    pub id: u32,
+    pub user_id: u32,
+    pub creation_date: mysql::chrono::NaiveDateTime,
+    pub hidden: bool,
 }
 
 /*
@@ -169,7 +169,7 @@ impl SqlStigmarksDB {
 
     fn add_url(self: &mut Self, url: &String) -> Result<u32, String> {
         match self.conn.exec_drop(
-            r"INSERT IGNORE INTO urls (url) VALUES (:url) ON DUPLICATE KEY UPDATE ref_count = ref_count + 1",
+            r"INSERT INTO urls (url) VALUES (:url) ON DUPLICATE KEY UPDATE ref_count = ref_count + 1",
             params! {
                     "url" => url,
             },
@@ -191,6 +191,32 @@ impl SqlStigmarksDB {
         }
     }
 
+    fn add_keyword_to_collection(self: &mut Self, collection_id: u32, keyword_id: u32) -> Result<(), String> {
+        match self.conn.exec_drop(
+            r"INSERT IGNORE INTO keyword_lists (collection_id, keyword_id) VALUES (:collection_id, :keyword_id)",
+            params! {
+                    "collection_id" => collection_id,
+                    "keyword_id" => keyword_id,
+            },
+        ) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(format!("insert.err: {}", err)),
+        }
+    }
+
+    fn add_url_to_collection(self: &mut Self, collection_id: u32, url_id: u32) -> Result<(), String> {
+        match self.conn.exec_drop(
+            r"INSERT IGNORE INTO url_lists (collection_id, url_id) VALUES (:collection_id, :url_id)",
+            params! {
+                    "collection_id" => collection_id,
+                    "url_id" => url_id,
+            },
+        ) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(format!("insert.err: {}", err)),
+        }
+    }
+
     // todo: -> Result<u32, Error>
     pub fn add_collection(self: &mut Self, user_id: u32, keywords: Vec<String>, urls: Vec<String>) -> Result<u32, String> {
         // create collection
@@ -206,8 +232,10 @@ impl SqlStigmarksDB {
                 for keyword in &keywords {
                     match self.add_keyword(keyword) {
                         Ok(keyword_id) => {
-                            // todo add keyword to list
-                            println!("\t# keyword: {} -> {}", keyword, keyword_id);
+                            match self.add_keyword_to_collection(collection_id, keyword_id) {
+                                Ok(_) => {},
+                                Err(err) => { return Err(err); },
+                            }
                         },
                         Err(err) => {
                             return Err(err);
@@ -218,8 +246,10 @@ impl SqlStigmarksDB {
                 for url in &urls {
                     match self.add_url(url) {
                         Ok(url_id) => {
-                            // todo add url to list
-                            println!("\t# url: {} -> {}", url, url_id);
+                            match self.add_url_to_collection(collection_id, url_id) {
+                                Ok(_) => {},
+                                Err(err) => { return Err(err); },
+                            }
                         },
                         Err(err) => {
                             return Err(err);
@@ -274,7 +304,7 @@ impl SqlStigmarksDB {
 
     pub fn get_collection_urls_by_id(self: &mut Self, collection_id: u32) -> Result<Vec<String>, String> {
         match self.conn.exec_map(
-            r"SELECT url FROM urls, url_lists where url_lists.collection_id=:collection_id and url.id=url_list.url_id",
+            r"SELECT url FROM urls, url_lists where url_lists.collection_id=:collection_id and urls.id=url_lists.url_id",
             params! {
                 "collection_id" => collection_id,
             },
@@ -287,7 +317,7 @@ impl SqlStigmarksDB {
 
     pub fn get_collection_keywords_by_id(self: &mut Self, collection_id: u32) -> Result<Vec<String>, String> {
         match self.conn.exec_map(
-            r"SELECT keyword FROM keywords, keyword_lists where keyword_lists.collection_id=:collection_id and keyword.id=keyword_list.keyword_id",
+            r"SELECT keyword FROM keywords, keyword_lists where keyword_lists.collection_id=:collection_id and keywords.id=keyword_lists.keyword_id",
             params! {
                 "collection_id" => collection_id,
             },

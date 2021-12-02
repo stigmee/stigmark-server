@@ -43,7 +43,8 @@ CREATE TABLE IF NOT EXISTS `keyword_lists` (
     KEY `collection_id` (`collection_id`),
     KEY `keyword_id` (`keyword_id`),
     CONSTRAINT `fk_keyword_lists_collections_id` FOREIGN KEY (`collection_id`) REFERENCES `collections` (`id`),
-    CONSTRAINT `fk_keyword_lists_keywords_id` FOREIGN KEY (`keyword_id`) REFERENCES `keywords` (`id`)
+    CONSTRAINT `fk_keyword_lists_keywords_id` FOREIGN KEY (`keyword_id`) REFERENCES `keywords` (`id`),
+    CONSTRAINT `fk_keyword_lists_primary_key` PRIMARY KEY (`collection_id`, `keyword_id`)
 );
 
 CREATE TABLE IF NOT EXISTS `url_lists` (
@@ -52,7 +53,8 @@ CREATE TABLE IF NOT EXISTS `url_lists` (
     KEY `collection_id` (`collection_id`),
     KEY `url_id` (`url_id`),
     CONSTRAINT `fk_url_lists_collection_id` FOREIGN KEY (`collection_id`) REFERENCES `collections` (`id`),
-    CONSTRAINT `fk_url_lists_url_id` FOREIGN KEY (`url_id`) REFERENCES `urls` (`id`)
+    CONSTRAINT `fk_url_lists_url_id` FOREIGN KEY (`url_id`) REFERENCES `urls` (`id`),
+    CONSTRAINT `fk_url_lists_primary_key` PRIMARY KEY (`collection_id`, `url_id`)
 );
 
 CREATE TABLE IF NOT EXISTS `url_scoring` (
