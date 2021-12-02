@@ -23,7 +23,7 @@
 
 use mysql::prelude::{Queryable};
 use mysql::{params};
-use mysql::chrono::NaiveDateTime;
+// use mysql::chrono::NaiveDateTime;
 
 use crate::sql::SqlStigmarksDB;
 
@@ -109,23 +109,130 @@ CREATE TABLE IF NOT EXISTS `url_lists` (
 
 #[allow(dead_code)]
 impl SqlStigmarksDB {
-    /*
-    pub fn add_collection(self: &mut Self, name: String, urls: Vec<String>, keywords: Vec<String>) -> Result<u32, String> {
-        match self.conn.exec_drop(
-            r"INSERT INTO users (name, email, hash) VALUES (:name, :email, :hash)",
+    fn get_keyword_id_by_name(self: &mut Self, keyword: &String) -> Result<u32, String> {
+        match self.conn.exec_first(
+            r"SELECT id FROM keywords where keyword=:keyword",
             params! {
-                    "name" => name,
-                    "email" => email,
-                    "hash" => pass,
+                "keyword" => keyword,
             },
         ) {
-            Ok(_) => Ok(self.conn.last_insert_id() as u32),
+            Ok(row) => {
+                match row.map(|id| id) {
+                    Some(id) => Ok(id),
+                    None => Err(format!("keyword {} not found", keyword)),
+                }
+            },
+            Err(err) => Err(format!("{}", err)),
+        }
+    }
+
+    fn get_url_id_by_name(self: &mut Self, url: &String) -> Result<u32, String> {
+        match self.conn.exec_first(
+            r"SELECT id FROM urls where url=:url",
+            params! {
+                "url" => url,
+            },
+        ) {
+            Ok(row) => {
+                match row.map(|id| id) {
+                    Some(id) => Ok(id),
+                    None => Err(format!("url {} not found", url)),
+                }
+            },
+            Err(err) => Err(format!("{}", err)),
+        }
+    }
+
+    fn add_keyword(self: &mut Self, keyword: &String) -> Result<u32, String> {
+        match self.conn.exec_drop(
+            r"INSERT INTO keywords (keyword) VALUES (:keyword) ON DUPLICATE KEY UPDATE ref_count = ref_count + 1",
+            params! {
+                    "keyword" => keyword,
+            },
+        ) {
+            Ok(_) => {
+                let mut keyword_id = self.conn.last_insert_id() as u32;
+                if keyword_id == 0 {
+                    keyword_id = match self.get_keyword_id_by_name(keyword) {
+                        Ok(keyword_id) => keyword_id,
+                        Err(_) => 0,
+                    }
+                };
+                if keyword_id == 0 {
+                    return Err(format!("could not find {} keyword_id", keyword));
+                }
+                Ok(keyword_id)
+            }
             Err(err) => Err(format!("insert.err: {}", err)),
         }
     }
-    */
 
-    // todo: -> Result<SqlUser, Error>
+    fn add_url(self: &mut Self, url: &String) -> Result<u32, String> {
+        match self.conn.exec_drop(
+            r"INSERT IGNORE INTO urls (url) VALUES (:url) ON DUPLICATE KEY UPDATE ref_count = ref_count + 1",
+            params! {
+                    "url" => url,
+            },
+        ) {
+            Ok(_) => {
+                let mut url_id = self.conn.last_insert_id() as u32;
+                if url_id == 0 {
+                    url_id = match self.get_url_id_by_name(url) {
+                        Ok(url_id) => url_id,
+                        Err(_) => 0,
+                    }
+                };
+                if url_id == 0 {
+                    return Err(format!("could not find {} url_id", url));
+                }
+                Ok(url_id)
+            }
+            Err(err) => Err(format!("insert.err: {}", err)),
+        }
+    }
+
+    // todo: -> Result<u32, Error>
+    pub fn add_collection(self: &mut Self, user_id: u32, keywords: Vec<String>, urls: Vec<String>) -> Result<u32, String> {
+        // create collection
+        match self.conn.exec_drop(
+            r"INSERT INTO collections (user_id) VALUES (:user_id)",
+            params! {
+                    "user_id" => user_id,
+            },
+        ) {
+            Ok(_) => {
+                let collection_id = self.conn.last_insert_id() as u32;
+                // add keywords
+                for keyword in &keywords {
+                    match self.add_keyword(keyword) {
+                        Ok(keyword_id) => {
+                            // todo add keyword to list
+                            println!("\t# keyword: {} -> {}", keyword, keyword_id);
+                        },
+                        Err(err) => {
+                            return Err(err);
+                        },
+                    }
+                }
+                // add urls
+                for url in &urls {
+                    match self.add_url(url) {
+                        Ok(url_id) => {
+                            // todo add url to list
+                            println!("\t# url: {} -> {}", url, url_id);
+                        },
+                        Err(err) => {
+                            return Err(err);
+                        },
+                    }
+                }
+                Ok(collection_id)
+            }
+            Err(err) => Err(format!("insert.collections.err: {}", err)),
+        }
+    }
+
+    // todo: -> Result<SqlCollection, Error>
     pub fn get_collection_by_id(self: &mut Self, collection_id: u32) -> Result<SqlCollection, String> {
         match self.conn.exec_first(
             r"SELECT id, user_id, creation_date, hidden FROM collections where id=:id",
@@ -148,7 +255,7 @@ impl SqlStigmarksDB {
         }
     }
 
-    // todo: -> Result<Vec<SqlUser>, Error>
+    // todo: -> Result<Vec<SqlCollection>, Error>
     pub fn get_all_collections(self: &mut Self) -> Result<Vec<SqlCollection>, String> {
         match self.conn.exec_map(
             r"SELECT id, user_id, creation_date, hidden FROM collections",
