@@ -40,11 +40,11 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SqlUser {
-    id: u32,
-    name: String,
-    email: String,
-    // hidden: hash: Vec<u8>,
-    creation_date: NaiveDateTime,
+    pub id: u32,
+    pub name: String,
+    pub email: String,
+    // pub hidden: hash: Vec<u8>,
+    pub creation_date: NaiveDateTime,
 }
 
 #[allow(dead_code)]
