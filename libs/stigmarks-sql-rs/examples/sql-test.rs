@@ -57,8 +57,8 @@ fn main() {
     println!("add_collecton 1");
     let coll_1 = stigmarks_db.add_collection(
         1,
-        vec!["foo".to_string(), "bar".to_string()],
-        vec!["https//google.fr".to_string()],
+        &vec!["foo".to_string(), "bar".to_string()],
+        &vec!["https//google.fr".to_string()],
     );
     match coll_1 {
         Ok(collection_id) => println!("\t{:?}", collection_id),
@@ -68,8 +68,8 @@ fn main() {
     println!("add_collecton 2");
     let coll_1 = stigmarks_db.add_collection(
         1,
-        vec!["foo".to_string(), "baz".to_string(), "hello".to_string()],
-        vec![
+        &vec!["foo".to_string(), "baz".to_string(), "hello".to_string()],
+        &vec![
             "https://philippe-anel.fr".to_string(),
             "https//google.fr".to_string(),
         ],
