@@ -23,8 +23,9 @@
 
 use rocket::{Request, Response};
 use rocket::response::{Responder, NamedFile};
-use rocket::http::Status;
+use rocket::http::{ContentType, Status};
 use rocket::response;
+use rocket_contrib::json;
 use rocket_contrib::json::JsonValue;
 use std::path::Path;
 
@@ -32,46 +33,60 @@ use std::path::Path;
 pub enum ServerResponse {
     Ok(),
     File(NamedFile),
-    Json(JsonValue),
-    Error(Status),
+    Json(JsonValue, Status),
+    Error(String, Status),
     BasicAuth(),
 }
 
 impl ServerResponse {
+    pub fn file(file: &Path) -> Self {
+        match NamedFile::open(file) {
+            Ok(file) => Self::File(file),
+            Err(_) => Self::Error("".to_string(), Status::NotFound),
+        }
+    }
+
     pub fn ok() -> Self {
         Self::Ok()
     }
 
-    pub fn file(file: &Path) -> Self {
-        match NamedFile::open(file) {
-            Ok(file) => Self::File(file),
-            Err(_) => Self::Error(Status::NotFound),
-        }
-    }
-
     #[allow(dead_code)]
-    pub fn json(json: JsonValue) -> Self {
-        Self::Json(json)
+    pub fn json(json: JsonValue, status: Status) -> Self {
+        Self::Json(json, status)
     }
 
     pub fn basic_auth() -> Self {
         Self::BasicAuth()
     }
+
+    // https://hermanradtke.com/2015/05/06/creating-a-rust-function-that-accepts-string-or-str.html 
+    pub fn error<S: Into<String>> (msg: S, status: Status) -> Self {
+        Self::Error(msg.into(), status)
+    }
 }
 
 impl<'r>  Responder<'r> for ServerResponse {
-    fn respond_to(self, _request: &Request) -> response::Result<'r> {
+    fn respond_to(self, req: &Request) -> response::Result<'r> {
         let mut res = Response::build();
         match self {
             Self::Ok() => res.status(Status::Ok),
-            Self::File(file) => res.sized_body(file),
-            Self::Error(status) => res.status(status),
+            Self::File(file) => res.streamed_body(file),
+            Self::Json(json, status) => {
+                res.merge(Response::build_from(json.respond_to(&req).unwrap()).finalize())
+                    .header(ContentType::JSON)
+                    .status(status)
+            }
+            Self::Error(msg, status) => {
+                let json = json!({"msg": msg});
+                res.merge(Response::build_from(json.respond_to(&req).unwrap()).finalize())
+                    .header(ContentType::JSON)
+                    .status(status)
+            },
             Self::BasicAuth() => {
                 res
                     .raw_header("WWW-Authenticate", "Basic realm=\"User Visible Realm\", charset=\"UTF-8\"")
                     .status(Status::Unauthorized)
             }
-            _ => res.status(Status::NotImplemented),
         }.ok()
     }
 }

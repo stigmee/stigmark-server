@@ -49,17 +49,17 @@ pub struct SqlUser {
 
 #[allow(dead_code)]
 impl SqlStigmarksDB {
-    pub fn add_user(
+    pub fn add_user<S: Into<String>>(
         self: &mut Self,
-        name: String,
-        email: String,
+        name: S,
+        email: S,
         pass: Vec<u8>,
     ) -> Result<u32, String> {
         let res = self.conn.exec_drop(
             r"INSERT INTO users (name, email, hash) VALUES (:name, :email, :hash)",
             params! {
-                    "name" => name,
-                    "email" => email,
+                    "name" => name.into(),
+                    "email" => email.into(),
                     "hash" => pass,
             },
         );

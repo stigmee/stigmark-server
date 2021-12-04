@@ -26,81 +26,31 @@
 #[macro_use]
 extern crate rocket;
 
-// extern crate bcrypt;
-
 // rocket stuff
 use rocket::config::{Config, Environment};
 
-// thread stuff
-use std::sync::mpsc;
-use std::thread;
-
-// crate modules
+// stigmark stuff
+mod stigmarks;
+mod login;
+mod files;
 mod response;
 mod basicauth;
-
-mod files;
-mod login;
-
-mod stigmarks;
-use stigmarks::StigmarkData;
-
-mod stigmers;
-use stigmers::StigmerService;
-
-mod database;
-use database::save_stigmarks_service;
+mod cors;
 
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
-
-mod cors;
+use std::sync::Mutex;
 use cors::CORS;
 
 const DB_USER: &str = "stigmark";
 const DB_PASS: &str = "yAfisEra";
 
 fn main() {
-    // start service thread
-    let (tx, rx): (
-        mpsc::SyncSender<StigmarkData>,
-        mpsc::Receiver<StigmarkData>,
-    ) = mpsc::sync_channel(256);
-    thread::spawn(move || save_stigmarks_service(rx));
-
-    // start the user manager
-    // TODO ----------------------------------------------------
-    // let svc = StigmerService::new("/data/stigmers.json");
-    // let user_id = svc.find_user_by_email(String::from("zexigh@gmail.com"));
-    // println!("found default user at {}", user_id);
-    
-    // TODO ----------------------------------------------------
     let mut stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
 
-    println!("add_user");
-    let user_id_0 = stigmarks_db.add_user(
-        String::from("Philippe Anel"),
-        String::from("zexigh@gmail.com"),
-        vec![],
-    );
-    match user_id_0 {
-        Ok(user) => println!("\t{:?}", user),
-        Err(err) => eprintln!("\tfailed: {}", err),
+    // todo: remove this. We need it to create user 1
+    if let Ok(user_id) = stigmarks_db.add_user("Philippe Anel", "zexigh@gmail.com", vec![]) {
+        println!("user {} added", user_id);
     }
-
-    println!("get_all_users");
-    let all_users = stigmarks_db.get_all_users();
-    match all_users {
-        Ok(users) => println!("\t{:?}", users),
-        Err(err) => eprintln!("\tfailed: {}", err),
-    }
-
-    println!("get_user_by_id");
-    let user_1 = stigmarks_db.get_user_by_id(1);
-    match user_1 {
-        Ok(user) => println!("\t{:?}", user),
-        Err(err) => eprintln!("\tfailed: {}", err),
-    }
-    // TODO ----------------------------------------------------
 
     // start the web service
     let config = Config::build(Environment::Staging)
@@ -113,7 +63,7 @@ fn main() {
     api_routes.append(&mut login::routes());
 
     rocket::custom(config)
-        .manage(tx)
+        .manage(Mutex::new(stigmarks_db))
         .attach(CORS)
         .mount("/", files::routes())
         .mount("/api/v1", api_routes)

@@ -21,10 +21,10 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // 
 
-use std::sync::mpsc;
 use serde::{Deserialize};
 use rocket::{State, Route};
 use rocket_contrib::json::Json;
+use rocket_contrib::json;
 use rocket::http::Status;
 use crate::response::ServerResponse;
 
@@ -35,11 +35,11 @@ struct StigmarkRequest {
     token: Option<String>,
 }
 
-pub struct StigmarkData {
-    pub user: u32,
-    pub urls: Vec<String>,
-    pub keys: Vec<String>,
-}
+// pub struct StigmarkData {
+//     pub user: u32,
+//     pub urls: Vec<String>,
+//     pub keys: Vec<String>,
+// }
 
 // OPTIONS https://stigmark.badro.com/api/v1/stigmarks
 #[options("/stigmarks", rank = 1)]
@@ -47,25 +47,28 @@ fn stigmarks_options() -> ServerResponse {
     ServerResponse::ok()
 }
 
+use stigmarks_sql_rs::sql::SqlStigmarksDB;
+use std::sync::Mutex;
+
 // POST https://stigmark.badro.com/api/v1/stigmarks
 #[post("/stigmarks", format = "json", data = "<mark>", rank = 1)]
-fn stigmarks_post(tx: State<mpsc::SyncSender<StigmarkData>>, mark: Json<StigmarkRequest>) -> Status {
-    match &mark.token {
-        Some(_token) => {
-            // if token != "foo" {
-            //     return Status::Unauthorized;
-            // }
-        },
-        None => {
-            return Status::Unauthorized;
-        }
+fn stigmarks_post(state: State<Mutex<SqlStigmarksDB>>, mark: Json<StigmarkRequest>) -> ServerResponse {
+    let token = &mark.token;
+    if let None = token {
+        return ServerResponse::error("missing token parameter", Status::BadRequest);
     }
-    tx.send(StigmarkData {
-        user: 3,
-        urls: mark.urls.clone(), // todo: remove this clone()
-        keys: mark.keys.clone(), // todo: remove this clone()
-    }).unwrap();
-    Status::Ok
+    // todo:
+    // if token.unwrap() != "foo" {
+    //     return ServerResponse::error("invalid token", Status::Unauthorized);
+    // }
+    let mut stigmarks_db = state.inner().lock().expect("lock db state");
+    // todo: note: this user 1 must have been created
+    let res = stigmarks_db.add_collection(1, &mark.keys, &mark.urls);
+    if let Err(err) = res { 	
+        eprintln!("add collection failed with: {}", err);
+        return ServerResponse::error(err, Status::InternalServerError);
+    }
+    ServerResponse::json(json!({"collection_id": res.unwrap()}), Status::Created)
 }
 
 pub fn routes() -> Vec<Route> {

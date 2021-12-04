@@ -218,7 +218,7 @@ impl SqlStigmarksDB {
     }
 
     // todo: -> Result<u32, Error>
-    pub fn add_collection(self: &mut Self, user_id: u32, keywords: Vec<String>, urls: Vec<String>) -> Result<u32, String> {
+    pub fn add_collection(self: &mut Self, user_id: u32, keywords: &Vec<String>, urls: &Vec<String>) -> Result<u32, String> {
         // create collection
         match self.conn.exec_drop(
             r"INSERT INTO collections (user_id) VALUES (:user_id)",
@@ -229,7 +229,7 @@ impl SqlStigmarksDB {
             Ok(_) => {
                 let collection_id = self.conn.last_insert_id() as u32;
                 // add keywords
-                for keyword in &keywords {
+                for keyword in keywords {
                     match self.add_keyword(keyword) {
                         Ok(keyword_id) => {
                             match self.add_keyword_to_collection(collection_id, keyword_id) {
@@ -243,7 +243,7 @@ impl SqlStigmarksDB {
                     }
                 }
                 // add urls
-                for url in &urls {
+                for url in urls {
                     match self.add_url(url) {
                         Ok(url_id) => {
                             match self.add_url_to_collection(collection_id, url_id) {
