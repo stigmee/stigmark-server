@@ -26,6 +26,10 @@ use stigmarks_sql_rs::sql::SqlStigmarksDB;
 const DB_USER: &str = "stigmark";
 const DB_PASS: &str = "yAfisEra";
 
+use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
+use std::thread;
+
 fn main() {
     let mut stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
 
@@ -65,38 +69,104 @@ fn main() {
         Err(err) => eprintln!("\tfailed: {}", err),
     }
 
-    println!("add_collecton 2");
-    let coll_1 = stigmarks_db.add_collection(
-        1,
-        &vec!["foo".to_string(), "baz".to_string(), "hello".to_string()],
-        &vec![
-            "https://philippe-anel.fr".to_string(),
-            "https//google.fr".to_string(),
-        ],
-    );
-    match coll_1 {
-        Ok(collection_id) => println!("\t{:?}", collection_id),
-        Err(err) => eprintln!("\tfailed: {}", err),
+    let mut handles = vec!();
+    for t in 0..10 {
+        let mut stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
+        handles.push(thread::spawn(move || {
+            let rng = &mut thread_rng();
+
+            let nc = 2000; // rng.gen::<u32>() % 200;
+            for n in 1..nc {
+                let w0 = rng.gen::<usize>() % 30;
+                let rand_string: String = rng
+                    .sample_iter(&Alphanumeric)
+                    .take(w0)
+                    .map(char::from)
+                    .collect();
+
+                let req = stigmarks_db.add_user(
+                    format!("user {}", rand_string),
+                    format!("zexigh@{}.com", rand_string),
+                    vec![],
+                );
+                let user_id = if let Ok(user_id) = req {
+                    user_id
+                } else {
+                    1
+                };
+
+                let mut urls = vec!["https://google.com".to_string()];
+                let u = rng.gen::<u32>() % 200;
+                for _ in 1..u {
+                    let w1 = rng.gen::<usize>() % 30;
+                    let rand_string: String = rng
+                        .sample_iter(&Alphanumeric)
+                        .take(w1)
+                        .map(char::from)
+                        .collect();
+                    urls.push(format!("https://{}.com", rand_string))
+                }
+
+                let mut keywords = vec!["foo".to_string()];
+                let k = rng.gen::<u32>() % 130;
+                for _ in 1..k {
+                    let w2 = rng.gen::<usize>() % 30;
+                    let rand_string: String = rng
+                        .sample_iter(&Alphanumeric)
+                        .take(w2)
+                        .map(char::from)
+                        .collect();
+                    keywords.push(format!("{}", rand_string))
+                }
+
+                let coll_1 = stigmarks_db.add_collection(user_id, &keywords, &urls);
+                match coll_1 {
+                    Ok(collection_id) => println!("{}: add_collection {}/{} - {} u={} k={}", t, n, nc, collection_id, u, k),
+                    Err(err) => eprintln!("\tfailed: {}", err),
+                }
+            }
+        }));
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
     }
 
     println!("get_all_collections");
     let all_collections = stigmarks_db.get_all_collections();
     match all_collections {
         Ok(collections) => {
+            let mut n = 0;
+            let mut u = 0;
+            let mut k = 0;
             for collection in &collections {
-                println!("\t{:?}", collection);
+                n += 1;
+                if n < 10 {
+                    println!("\t{:?}", collection);
+                }
                 let collection_keywords = stigmarks_db.get_collection_keywords_by_id(collection.id);
                 match collection_keywords {
-                    Ok(keywords) => println!("\t\t{:?}", keywords),
+                    Ok(keywords) => {
+                        k += keywords.len();
+                        if n < 10 {
+                            println!("\t\t{} keywords", keywords.len());
+                        }
+                    }
                     Err(err) => eprintln!("\t\tfailed: {}", err),
                 }
                 let collection_urls = stigmarks_db.get_collection_urls_by_id(collection.id);
                 match collection_urls {
-                    Ok(urls) => println!("\t\t{:?}", urls),
+                    Ok(urls) => {
+                        u += urls.len();
+                        if n < 10 {
+                            println!("\t\t{} urls", urls.len());
+                        }
+                    }
                     Err(err) => eprintln!("\t\tfailed: {}", err),
                 }
             }
-        },
+            println!("{} entries, {} keywords, {} urls", n, k, u);
+        }
         Err(err) => eprintln!("\tfailed: {}", err),
     }
 
