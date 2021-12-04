@@ -51,8 +51,13 @@ use stigmers::StigmerService;
 mod database;
 use database::save_stigmarks_service;
 
+use stigmarks_sql_rs::sql::SqlStigmarksDB;
+
 mod cors;
 use cors::CORS;
+
+const DB_USER: &str = "stigmark";
+const DB_PASS: &str = "yAfisEra";
 
 fn main() {
     // start service thread
@@ -64,9 +69,37 @@ fn main() {
 
     // start the user manager
     // TODO ----------------------------------------------------
-    let svc = StigmerService::new("/data/stigmers.json");
-    let user_id = svc.find_user_by_email(String::from("zexigh@gmail.com"));
-    println!("found default user at {}", user_id);
+    // let svc = StigmerService::new("/data/stigmers.json");
+    // let user_id = svc.find_user_by_email(String::from("zexigh@gmail.com"));
+    // println!("found default user at {}", user_id);
+    
+    // TODO ----------------------------------------------------
+    let mut stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
+
+    println!("add_user");
+    let user_id_0 = stigmarks_db.add_user(
+        String::from("Philippe Anel"),
+        String::from("zexigh@gmail.com"),
+        vec![],
+    );
+    match user_id_0 {
+        Ok(user) => println!("\t{:?}", user),
+        Err(err) => eprintln!("\tfailed: {}", err),
+    }
+
+    println!("get_all_users");
+    let all_users = stigmarks_db.get_all_users();
+    match all_users {
+        Ok(users) => println!("\t{:?}", users),
+        Err(err) => eprintln!("\tfailed: {}", err),
+    }
+
+    println!("get_user_by_id");
+    let user_1 = stigmarks_db.get_user_by_id(1);
+    match user_1 {
+        Ok(user) => println!("\t{:?}", user),
+        Err(err) => eprintln!("\tfailed: {}", err),
+    }
     // TODO ----------------------------------------------------
 
     // start the web service

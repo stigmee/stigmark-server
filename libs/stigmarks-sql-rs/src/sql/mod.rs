@@ -34,9 +34,9 @@ pub mod collections;
 impl SqlStigmarksDB {
     pub fn new(db_name: &str, db_pass: &str) -> Self {
         let url = format!("mysql://{}:{}@localhost:3306/stigmarks", db_name, db_pass);
-        let opts = Opts::from_url(url.as_str()).unwrap();
-        let pool = Pool::new(opts).unwrap();
-        let conn = pool.get_conn().unwrap();
+        let opts = Opts::from_url(url.as_str()).expect("sql: failed get opts from url");
+        let pool = Pool::new(opts).expect("sql: could create pool");
+        let conn = pool.get_conn().expect("sql: could not connect");
         Self{
             conn,
         }

@@ -21,7 +21,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-use stigmarks::sql::SqlStigmarksDB;
+use stigmarks_sql_rs::sql::SqlStigmarksDB;
 
 const DB_USER: &str = "stigmark";
 const DB_PASS: &str = "yAfisEra";
