@@ -50,7 +50,7 @@ pub struct SqlUser {
 #[allow(dead_code)]
 impl SqlStigmarksDB {
     pub fn add_user<S: Into<String>>(
-        self: &mut Self,
+        self: &Self,
         name: S,
         email: S,
         pass: Vec<u8>,
@@ -71,7 +71,7 @@ impl SqlStigmarksDB {
     }
 
     // todo: -> Result<SqlUser, Error>
-    pub fn get_user_by_id(self: &mut Self, user_id: u32) -> Result<SqlUser, String> {
+    pub fn get_user_by_id(self: &Self, user_id: u32) -> Result<SqlUser, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_first(
             r"SELECT id, name, email, creation_date FROM users where id=:id",
@@ -96,7 +96,7 @@ impl SqlStigmarksDB {
     }
 
     // todo: -> Result<Vec<SqlUser>, Error>
-    pub fn get_all_users(self: &mut Self) -> Result<Vec<SqlUser>, String> {
+    pub fn get_all_users(self: &Self) -> Result<Vec<SqlUser>, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_map(
             r"SELECT id, name, email, creation_date FROM users",
@@ -116,7 +116,7 @@ impl SqlStigmarksDB {
 
     // todo: -> Result<SqlUser, Error>
     pub fn get_user_by_auth(
-        self: &mut Self,
+        self: &Self,
         user_email: &String,
         password_hash: Vec<u8>,
     ) -> Result<SqlUser, String> {

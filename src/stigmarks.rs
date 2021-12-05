@@ -48,11 +48,11 @@ fn stigmarks_options() -> ServerResponse {
 }
 
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
-use std::sync::Mutex;
+// use std::sync::Mutex;
 
 // POST https://stigmark.badro.com/api/v1/stigmarks
 #[post("/stigmarks", format = "json", data = "<mark>", rank = 1)]
-fn stigmarks_post(state: State<Mutex<SqlStigmarksDB>>, mark: Json<StigmarkRequest>) -> ServerResponse {
+fn stigmarks_post(state: State<SqlStigmarksDB>, mark: Json<StigmarkRequest>) -> ServerResponse {
     let token = &mark.token;
     if let None = token {
         return ServerResponse::error("missing token parameter", Status::BadRequest);
@@ -61,7 +61,7 @@ fn stigmarks_post(state: State<Mutex<SqlStigmarksDB>>, mark: Json<StigmarkReques
     // if token.unwrap() != "foo" {
     //     return ServerResponse::error("invalid token", Status::Unauthorized);
     // }
-    let mut stigmarks_db = state.inner().lock().expect("lock db state");
+    let mut stigmarks_db = state.inner();
     // todo: note: this user 1 must have been created
     let res = stigmarks_db.add_collection(1, &mark.keys, &mark.urls);
     if let Err(err) = res { 	

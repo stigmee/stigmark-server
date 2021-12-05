@@ -31,7 +31,7 @@ use rand::{thread_rng, Rng};
 use std::thread;
 
 fn main() {
-    let mut stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
+    let stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
 
     println!("add_user");
     let user_id_0 = stigmarks_db.add_user(
@@ -71,7 +71,7 @@ fn main() {
 
     let mut handles = vec!();
     for t in 0..10 {
-        let mut stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
+        let stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
         handles.push(thread::spawn(move || {
             let rng = &mut thread_rng();
 
