@@ -61,7 +61,7 @@ fn stigmarks_post(state: State<SqlStigmarksDB>, mark: Json<StigmarkRequest>) -> 
     // if token.unwrap() != "foo" {
     //     return ServerResponse::error("invalid token", Status::Unauthorized);
     // }
-    let mut stigmarks_db = state.inner();
+    let stigmarks_db = state.inner();
     // todo: note: this user 1 must have been created
     let res = stigmarks_db.add_collection(1, &mark.keys, &mark.urls);
     if let Err(err) = res { 	

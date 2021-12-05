@@ -38,14 +38,14 @@ mod basicauth;
 mod cors;
 
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
-use std::sync::Mutex;
+// use std::sync::Mutex;
 use cors::CORS;
 
 const DB_USER: &str = "stigmark";
 const DB_PASS: &str = "yAfisEra";
 
 fn main() {
-    let mut stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
+    let stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
 
     // todo: remove this. We need it to create user 1
     if let Ok(user_id) = stigmarks_db.add_user("Philippe Anel", "zexigh@gmail.com", vec![]) {
@@ -63,7 +63,7 @@ fn main() {
     api_routes.append(&mut login::routes());
 
     rocket::custom(config)
-        .manage(Mutex::new(stigmarks_db))
+        .manage(stigmarks_db)
         .attach(CORS)
         .mount("/", files::routes())
         .mount("/api/v1", api_routes)
