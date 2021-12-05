@@ -110,7 +110,8 @@ CREATE TABLE IF NOT EXISTS `url_lists` (
 #[allow(dead_code)]
 impl SqlStigmarksDB {
     fn get_keyword_id_by_name(self: &mut Self, keyword: &String) -> Result<u32, String> {
-        match self.conn.exec_first(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_first(
             r"SELECT id FROM keywords where keyword=:keyword",
             params! {
                 "keyword" => keyword,
@@ -127,7 +128,8 @@ impl SqlStigmarksDB {
     }
 
     fn get_url_id_by_name(self: &mut Self, url: &String) -> Result<u32, String> {
-        match self.conn.exec_first(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_first(
             r"SELECT id FROM urls where url=:url",
             params! {
                 "url" => url,
@@ -144,14 +146,15 @@ impl SqlStigmarksDB {
     }
 
     fn add_keyword(self: &mut Self, keyword: &String) -> Result<u32, String> {
-        match self.conn.exec_drop(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_drop(
             r"INSERT INTO keywords (keyword) VALUES (:keyword) ON DUPLICATE KEY UPDATE ref_count = ref_count + 1",
             params! {
                     "keyword" => keyword,
             },
         ) {
             Ok(_) => {
-                let mut keyword_id = self.conn.last_insert_id() as u32;
+                let mut keyword_id = conn.last_insert_id() as u32;
                 if keyword_id == 0 {
                     keyword_id = match self.get_keyword_id_by_name(keyword) {
                         Ok(keyword_id) => keyword_id,
@@ -168,14 +171,15 @@ impl SqlStigmarksDB {
     }
 
     fn add_url(self: &mut Self, url: &String) -> Result<u32, String> {
-        match self.conn.exec_drop(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_drop(
             r"INSERT INTO urls (url) VALUES (:url) ON DUPLICATE KEY UPDATE ref_count = ref_count + 1",
             params! {
                     "url" => url,
             },
         ) {
             Ok(_) => {
-                let mut url_id = self.conn.last_insert_id() as u32;
+                let mut url_id = conn.last_insert_id() as u32;
                 if url_id == 0 {
                     url_id = match self.get_url_id_by_name(url) {
                         Ok(url_id) => url_id,
@@ -192,7 +196,8 @@ impl SqlStigmarksDB {
     }
 
     fn add_keyword_to_collection(self: &mut Self, collection_id: u32, keyword_id: u32) -> Result<(), String> {
-        match self.conn.exec_drop(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_drop(
             r"INSERT IGNORE INTO keyword_lists (collection_id, keyword_id) VALUES (:collection_id, :keyword_id)",
             params! {
                     "collection_id" => collection_id,
@@ -205,7 +210,8 @@ impl SqlStigmarksDB {
     }
 
     fn add_url_to_collection(self: &mut Self, collection_id: u32, url_id: u32) -> Result<(), String> {
-        match self.conn.exec_drop(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_drop(
             r"INSERT IGNORE INTO url_lists (collection_id, url_id) VALUES (:collection_id, :url_id)",
             params! {
                     "collection_id" => collection_id,
@@ -220,14 +226,15 @@ impl SqlStigmarksDB {
     // todo: -> Result<u32, Error>
     pub fn add_collection(self: &mut Self, user_id: u32, keywords: &Vec<String>, urls: &Vec<String>) -> Result<u32, String> {
         // create collection
-        match self.conn.exec_drop(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_drop(
             r"INSERT INTO collections (user_id) VALUES (:user_id)",
             params! {
                     "user_id" => user_id,
             },
         ) {
             Ok(_) => {
-                let collection_id = self.conn.last_insert_id() as u32;
+                let collection_id = conn.last_insert_id() as u32;
                 // add keywords
                 for keyword in keywords {
                     match self.add_keyword(keyword) {
@@ -264,7 +271,8 @@ impl SqlStigmarksDB {
 
     // todo: -> Result<SqlCollection, Error>
     pub fn get_collection_by_id(self: &mut Self, collection_id: u32) -> Result<SqlCollection, String> {
-        match self.conn.exec_first(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_first(
             r"SELECT id, user_id, creation_date, hidden FROM collections where id=:id",
             params! {
                 "id" => collection_id,
@@ -287,7 +295,8 @@ impl SqlStigmarksDB {
 
     // todo: -> Result<Vec<SqlCollection>, Error>
     pub fn get_all_collections(self: &mut Self) -> Result<Vec<SqlCollection>, String> {
-        match self.conn.exec_map(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_map(
             r"SELECT id, user_id, creation_date, hidden FROM collections",
             {},
             |(id, user_id, creation_date, hidden)| SqlCollection {
@@ -303,7 +312,8 @@ impl SqlStigmarksDB {
     }
 
     pub fn get_collection_urls_by_id(self: &mut Self, collection_id: u32) -> Result<Vec<String>, String> {
-        match self.conn.exec_map(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_map(
             r"SELECT url FROM urls, url_lists where url_lists.collection_id=:collection_id and urls.id=url_lists.url_id",
             params! {
                 "collection_id" => collection_id,
@@ -316,7 +326,8 @@ impl SqlStigmarksDB {
     }
 
     pub fn get_collection_keywords_by_id(self: &mut Self, collection_id: u32) -> Result<Vec<String>, String> {
-        match self.conn.exec_map(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_map(
             r"SELECT keyword FROM keywords, keyword_lists where keyword_lists.collection_id=:collection_id and keywords.id=keyword_lists.keyword_id",
             params! {
                 "collection_id" => collection_id,

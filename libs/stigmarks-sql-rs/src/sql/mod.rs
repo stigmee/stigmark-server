@@ -24,7 +24,8 @@
 use mysql::{Opts, Pool};
 
 pub struct SqlStigmarksDB {
-    conn: mysql::PooledConn,
+    // conn: mysql::PooledConn,
+    pool: mysql::Pool
 }
 
 pub mod users;
@@ -36,9 +37,12 @@ impl SqlStigmarksDB {
         let url = format!("mysql://{}:{}@localhost:3306/stigmarks", db_name, db_pass);
         let opts = Opts::from_url(url.as_str()).expect("sql: failed get opts from url");
         let pool = Pool::new(opts).expect("sql: could create pool");
-        let conn = pool.get_conn().expect("sql: could not connect");
-        Self{
-            conn,
+        // let conn = pool.get_conn().expect("sql: could not connect");
+        // Self{
+        //     conn,
+        // }
+        Self {
+            pool
         }
     }
 

@@ -55,7 +55,8 @@ impl SqlStigmarksDB {
         email: S,
         pass: Vec<u8>,
     ) -> Result<u32, String> {
-        let res = self.conn.exec_drop(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        let res = conn.exec_drop(
             r"INSERT INTO users (name, email, hash) VALUES (:name, :email, :hash)",
             params! {
                     "name" => name.into(),
@@ -66,12 +67,13 @@ impl SqlStigmarksDB {
         if let Err(err) = res {
             return Err(format!("insert.err: {}", err));
         }
-        Ok(self.conn.last_insert_id() as u32)
+        Ok(conn.last_insert_id() as u32)
     }
 
     // todo: -> Result<SqlUser, Error>
     pub fn get_user_by_id(self: &mut Self, user_id: u32) -> Result<SqlUser, String> {
-        let res = self.conn.exec_first(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        let res = conn.exec_first(
             r"SELECT id, name, email, creation_date FROM users where id=:id",
             params! {
                 "id" => user_id,
@@ -95,7 +97,8 @@ impl SqlStigmarksDB {
 
     // todo: -> Result<Vec<SqlUser>, Error>
     pub fn get_all_users(self: &mut Self) -> Result<Vec<SqlUser>, String> {
-        let res = self.conn.exec_map(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        let res = conn.exec_map(
             r"SELECT id, name, email, creation_date FROM users",
             {},
             |(id, name, email, creation_date)| SqlUser {
@@ -117,7 +120,8 @@ impl SqlStigmarksDB {
         user_email: &String,
         password_hash: Vec<u8>,
     ) -> Result<SqlUser, String> {
-        let res = self.conn.exec_first(
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        let res = conn.exec_first(
             r"SELECT id, name, email, hash, creation_date FROM users where id=:id",
             params! {
                 "email" => user_email,

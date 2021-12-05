@@ -47,7 +47,7 @@ fn main() {
     println!("get_all_users");
     let all_users = stigmarks_db.get_all_users();
     match all_users {
-        Ok(users) => println!("\t{:?}", users),
+        Ok(users) => println!("\tgot {} users", users.len()),
         Err(err) => eprintln!("\tfailed: {}", err),
     }
 
@@ -75,7 +75,7 @@ fn main() {
         handles.push(thread::spawn(move || {
             let rng = &mut thread_rng();
 
-            let nc = 2000; // rng.gen::<u32>() % 200;
+            let nc = 100000; // rng.gen::<u32>() % 200;
             for n in 1..nc {
                 let w0 = rng.gen::<usize>() % 30;
                 let rand_string: String = rng
@@ -96,7 +96,7 @@ fn main() {
                 };
 
                 let mut urls = vec!["https://google.com".to_string()];
-                let u = rng.gen::<u32>() % 200;
+                let u = rng.gen::<u32>() % 5 + 1;
                 for _ in 1..u {
                     let w1 = rng.gen::<usize>() % 30;
                     let rand_string: String = rng
@@ -108,7 +108,7 @@ fn main() {
                 }
 
                 let mut keywords = vec!["foo".to_string()];
-                let k = rng.gen::<u32>() % 130;
+                let k = rng.gen::<u32>() % 2 + 1;
                 for _ in 1..k {
                     let w2 = rng.gen::<usize>() % 30;
                     let rand_string: String = rng
@@ -121,7 +121,9 @@ fn main() {
 
                 let coll_1 = stigmarks_db.add_collection(user_id, &keywords, &urls);
                 match coll_1 {
-                    Ok(collection_id) => println!("{}: add_collection {}/{} - {} u={} k={}", t, n, nc, collection_id, u, k),
+                    Ok(collection_id) => if n % 300 == 0 {
+                        println!("{}: add_collection {}/{} - {} u={} k={}", t, n, nc, collection_id, u, k);
+                    },
                     Err(err) => eprintln!("\tfailed: {}", err),
                 }
             }
