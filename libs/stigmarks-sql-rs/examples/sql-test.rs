@@ -73,6 +73,16 @@ fn main() {
         Err(err) => eprintln!("\tfailed: {}", err),
     }
 
+    if let Err(err) = stigmarks_db.add_event(0, "foo", 1, 2, 3, "4") {
+        eprintln!("stigmarks_db.add_event failed: {}", err);
+        return;
+    }
+
+    if let Err(err) = stigmarks_db.add_scoring(1, 1, 2.0, -2.0) {
+        eprintln!("stigmarks_db.add_scoring failed: {}", err);
+        return;
+    }
+
     let mut handles = vec!();
     for t in 0..5 {
         let stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);

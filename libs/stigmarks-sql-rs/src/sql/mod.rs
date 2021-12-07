@@ -30,8 +30,8 @@ pub struct SqlStigmarksDB {
 
 pub mod collections;
 pub mod users;
-
-
+pub mod events;
+pub mod scoring;
 
 #[allow(dead_code)]
 impl SqlStigmarksDB {

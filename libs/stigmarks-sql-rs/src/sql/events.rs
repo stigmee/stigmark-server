@@ -21,16 +21,22 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // 
 
+use mysql::chrono::NaiveDateTime;
+use mysql::params;
+use mysql::prelude::Queryable;
+
+pub use crate::sql::SqlStigmarksDB;
+
 #[derive(Debug, PartialEq)]
-pub struct SqlStigmeeEvents {
+pub struct SqlStigmeeEvents<S: Into<String>> {
     event_id: u32,
     event_date: NaiveDateTime,
     event_type: u32,
-    event_desc: String,
+    event_desc: S,
     event_arg1: u32,
     event_arg2: u32,
     event_arg3: u32,
-    event_arg4: String,
+    event_arg4: S,
 }
 
 #[allow(dead_code)]
@@ -38,22 +44,22 @@ impl SqlStigmarksDB {
     pub fn add_event<S: Into<String>>(
         self: &Self,
         event_type: u32,
-        event_desc: String,
+        event_desc: S,
         event_arg1: u32,
         event_arg2: u32,
         event_arg3: u32,
-        event_arg4: String,
+        event_arg4: S,
     ) -> Result<u32, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_drop(
             r"INSERT INTO stigmee_events (event_type, event_desc, event_arg1, event_arg2, event_arg3, event_arg4) VALUES (:event_type, :event_desc, :event_arg1, :event_arg2, :event_arg3, :event_arg4)",
             params! {
                 "event_type" => event_type,
-                "event_desc" => event_desc,
+                "event_desc" => event_desc.into(),
                 "event_arg1" => event_arg1,
                 "event_arg2" => event_arg2,
                 "event_arg3" => event_arg3,
-                "event_arg4" => event_arg4,
+                "event_arg4" => event_arg4.into(),
             },
         );
         if let Err(err) = res {

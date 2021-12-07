@@ -21,6 +21,10 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // 
 
+use mysql::prelude::Queryable;
+use mysql::params;
+pub use crate::sql::SqlStigmarksDB;
+
 #[derive(Debug, PartialEq)]
 pub struct SqlUrlScoring {
     url_id: u32,
@@ -31,7 +35,7 @@ pub struct SqlUrlScoring {
 
 #[allow(dead_code)]
 impl SqlStigmarksDB {
-    pub fn add_scoring<S: Into<String>>(
+    pub fn add_scoring(
         self: &Self,
         url_id: u32,
         keyword_id: u32,
@@ -40,12 +44,12 @@ impl SqlStigmarksDB {
         ) -> Result<u32, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_drop(
-            r"INSERT INTO stigmee_events (url_id, keyword_id, pscore, vscore) VALUES (:url_id, :keyword_id, :pscore, :vscore)",
+            r"INSERT INTO url_scoring (url_id, keyword_id, pscore, vscore) VALUES (:url_id, :keyword_id, :pscore, :vscore)",
             params! {
-                "url_id": url_id,
-                "keyword_id": keyword_id,
-                "pscore": pscore,
-                "vscore": vscore,
+                "url_id" => url_id,
+                "keyword_id" => keyword_id,
+                "pscore" => pscore,
+                "vscore" => vscore,
             },
         );
         if let Err(err) = res {
