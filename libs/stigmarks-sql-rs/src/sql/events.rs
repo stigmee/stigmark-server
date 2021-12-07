@@ -22,30 +22,38 @@
 // 
 
 #[derive(Debug, PartialEq)]
-pub struct SqlUrlScoring {
-    url_id: u32,
-    keyword_id: u32,
-    pscore: f64,
-    vscore: f64,
+pub struct SqlStigmeeEvents {
+    event_id: u32,
+    event_date: NaiveDateTime,
+    event_type: u32,
+    event_desc: String,
+    event_arg1: u32,
+    event_arg2: u32,
+    event_arg3: u32,
+    event_arg4: String,
 }
 
 #[allow(dead_code)]
 impl SqlStigmarksDB {
-    pub fn add_scoring<S: Into<String>>(
+    pub fn add_event<S: Into<String>>(
         self: &Self,
-        url_id: u32,
-        keyword_id: u32,
-        pscore: f64,
-        vscore: f64,
-        ) -> Result<u32, String> {
+        event_type: u32,
+        event_desc: String,
+        event_arg1: u32,
+        event_arg2: u32,
+        event_arg3: u32,
+        event_arg4: String,
+    ) -> Result<u32, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_drop(
-            r"INSERT INTO stigmee_events (url_id, keyword_id, pscore, vscore) VALUES (:url_id, :keyword_id, :pscore, :vscore)",
+            r"INSERT INTO stigmee_events (event_type, event_desc, event_arg1, event_arg2, event_arg3, event_arg4) VALUES (:event_type, :event_desc, :event_arg1, :event_arg2, :event_arg3, :event_arg4)",
             params! {
-                "url_id": url_id,
-                "keyword_id": keyword_id,
-                "pscore": pscore,
-                "vscore": vscore,
+                "event_type" => event_type,
+                "event_desc" => event_desc,
+                "event_arg1" => event_arg1,
+                "event_arg2" => event_arg2,
+                "event_arg3" => event_arg3,
+                "event_arg4" => event_arg4,
             },
         );
         if let Err(err) = res {

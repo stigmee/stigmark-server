@@ -60,21 +60,23 @@ CREATE TABLE IF NOT EXISTS `url_lists` (
 CREATE TABLE IF NOT EXISTS `url_scoring` (
     `url_id` int(11) NOT NULL,
     `keyword_id` int(11) NOT NULL,
+    `pscore` double NOT NULL,
+    `vscore` double NOT NULL,
     PRIMARY KEY (`url_id`, `keyword_id`),
     CONSTRAINT `fk_url_scoring_url_id` FOREIGN KEY (`url_id`) REFERENCES `urls` (`id`),
     CONSTRAINT `fk_url_scoring_keyword_id` FOREIGN KEY (`keyword_id`) REFERENCES `keywords` (`id`)
 );
 
 CREATE TABLE IF NOT EXISTS `stigmee_events` (
-    `event_id` int(11) NOT NULL,
-    `event_date` timestamp NOT NULL,
+    `event_id` int(11) NOT NULL AUTO_INCREMENT,
+    `event_date` timestamp NOT NULL DEFAULT NOW(),
     `event_type` int(11),
     `event_desc` varchar(256) NOT NULL,
     `event_arg1` int(11),
     `event_arg2` int(11),
     `event_arg3` int(11),
     `event_arg4` varchar(4000),
-    PRIMARY KEY (`event_id`,`event_date`)
+    PRIMARY KEY (`event_id`, `event_date`)
 )
 PARTITION BY RANGE (UNIX_TIMESTAMP(`event_date`))
 (

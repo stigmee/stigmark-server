@@ -33,6 +33,10 @@ use std::thread;
 fn main() {
     let stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
 
+    if let Err(err) = stigmarks_db.init() {
+        eprintln!("\tinit failed: {}", err);
+    }
+
     println!("add_user");
     let user_id_0 = stigmarks_db.add_user(
         String::from("Philippe Anel"),
@@ -70,12 +74,12 @@ fn main() {
     }
 
     let mut handles = vec!();
-    for t in 0..10 {
+    for t in 0..5 {
         let stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
         handles.push(thread::spawn(move || {
             let rng = &mut thread_rng();
 
-            let nc = 100000; // rng.gen::<u32>() % 200;
+            let nc = 5; // rng.gen::<u32>() % 200;
             for n in 1..nc {
                 let w0 = rng.gen::<usize>() % 30;
                 let rand_string: String = rng
