@@ -1,6 +1,6 @@
-CREATE DATABASE IF NOT EXISTS `stigmarks`;
+/* CREATE DATABASE IF NOT EXISTS `stigmarks`; */
 
-USE `stigmarks`;
+/* USE `stigmarks`; */
 
 CREATE TABLE IF NOT EXISTS `users` (
     `id` int(11) NOT NULL AUTO_INCREMENT,

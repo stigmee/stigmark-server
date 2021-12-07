@@ -25,9 +25,8 @@
 
 #[macro_use]
 extern crate rocket;
-
-// rocket stuff
-use rocket::config::{Config, Environment};
+use rocket::fairing::AdHoc;
+use cors::CORS;
 
 // stigmark stuff
 mod stigmarks;
@@ -36,35 +35,28 @@ mod files;
 mod response;
 mod basicauth;
 mod cors;
-
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
-// use std::sync::Mutex;
-use cors::CORS;
-
-const DB_USER: &str = "stigmark";
-const DB_PASS: &str = "yAfisEra";
 
 fn main() {
-    let stigmarks_db = SqlStigmarksDB::new(DB_USER, DB_PASS);
-
-    // todo: remove this. We need it to create user 1
-    if let Ok(user_id) = stigmarks_db.add_user("Philippe Anel", "zexigh@gmail.com", vec![]) {
-        println!("user {} added", user_id);
-    }
-
-    // start the web service
-    let config = Config::build(Environment::Staging)
-        .address("0.0.0.0")
-        .port(8000)
-        .finalize()
-        .unwrap();
-
     let mut api_routes = stigmarks::routes();
     api_routes.append(&mut login::routes());
 
-    rocket::custom(config)
-        .manage(stigmarks_db)
+    rocket::ignite()
         .attach(CORS)
+        .attach(AdHoc::on_attach("db_cred", |rocket| {
+            let val = rocket.config().get_string("db_cred").unwrap_or("".to_string());
+            let creds: Vec<&str> = val.split(';').collect( );
+            if creds.len() != 2 {
+                println!("invalid credantial. Expected user;pass");
+                return Err(rocket);
+            }
+            let stigmarks_db = SqlStigmarksDB::new(creds[0], creds[1]);
+            if let Err(err) = stigmarks_db.init() {
+                println!("stigmarks_db.init failed: {}", err);
+                return Err(rocket);
+            }
+            Ok(rocket.manage(stigmarks_db))
+        }))
         .mount("/", files::routes())
         .mount("/api/v1", api_routes)
         .launch();

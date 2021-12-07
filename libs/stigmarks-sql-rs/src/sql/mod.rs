@@ -1,35 +1,37 @@
-// 
+//
 //  Stigmee: A 3D browser and decentralized social network.
 //  Copyright 2021 Philippe Anel <zexigh@gmail.com>
-// 
+//
 //  This file is part of Stigmee.
-// 
+//
 //  Project : stigmarks-sql
 //  Version : 0.0-1
-// 
+//
 //  Stigmee is free software: you can redistribute it and/or modify it
 //  under the terms of the GNU General Public License as published by
 //  the Free Software Foundation, either version 3 of the License, or
 //  (at your option) any later version.
-// 
+//
 //  This program is distributed in the hope that it will be useful, but
 //  WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 //  General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
+//
 
 use mysql::{Opts, Pool};
+use mysql::prelude::Queryable;
 
 pub struct SqlStigmarksDB {
-    // conn: mysql::PooledConn,
-    pool: mysql::Pool
+    pool: mysql::Pool,
 }
 
-pub mod users;
 pub mod collections;
+pub mod users;
+
+
 
 #[allow(dead_code)]
 impl SqlStigmarksDB {
@@ -37,16 +39,19 @@ impl SqlStigmarksDB {
         let url = format!("mysql://{}:{}@localhost:3306/stigmarks", db_name, db_pass);
         let opts = Opts::from_url(url.as_str()).expect("sql: failed get opts from url");
         let pool = Pool::new(opts).expect("sql: could create pool");
-        // let conn = pool.get_conn().expect("sql: could not connect");
-        // Self{
-        //     conn,
-        // }
-        Self {
-            pool
-        }
+        Self { pool }
     }
 
-    pub fn init() {
-        // todo: init sql table from '../../../../sql/stigmarks.sql'
+    pub fn init(self: &Self) -> Result<(), String> {
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        let init_str = include_str!("../../../../sql/stigmarks.sql");
+        if let Err(err) = conn.query_iter(init_str) {
+            return Err(format!("{}", err));
+        }
+
+        if let Ok(user_id) = self.add_user("Philippe Anel", "zexigh@gmail.com", vec![]) {
+            println!("user {} added", user_id);
+        }
+        Ok(())
     }
 }
