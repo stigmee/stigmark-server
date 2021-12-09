@@ -32,45 +32,46 @@ use crate::token::create_token;
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
 
 #[derive(Deserialize)]
-struct LoginRequest {
+struct SigninRequest {
     user: String,
+    mail: String,
     pass: String,
 }
 
 #[derive(Serialize)]
-struct LoginResult {
+struct SigninResult {
     token: String,
 }
 
 #[allow(dead_code)]
-impl LoginResult {
+impl SigninResult {
     fn new<S: Into<String>>(token: S) -> Self {
-        LoginResult {
+        SigninResult {
             token: token.into(),
         }
     }
 }
 
-#[options("/login")]
-fn login_options() ->ServerResponse {
+#[options("/signin")]
+fn signin_options() ->ServerResponse {
     ServerResponse::ok()
 }
 
-#[post("/login", format = "json", data = "<req>")]
-fn login_post(state: State<SqlStigmarksDB>, req: Json<LoginRequest>) -> ServerResponse {
+#[post("/signin", format = "json", data = "<req>")]
+fn signin_post(state: State<SqlStigmarksDB>, req: Json<SigninRequest>) -> ServerResponse {
     let passwd = &req.pass;
     let hash = bcrypt::hash(passwd, 6).unwrap();
-    let mut hash_string = String::new();
-    for byte in hash.bytes() {
-        write!(&mut hash_string, "{:X}", byte).expect("Unable to write");
+    let stigmarks_db = state.inner();
+    let res = stigmarks_db.add_user(req.user, req.mail, hash.as_bytes().iter().collect());
+    if let Err(err) = res { 	
+        eprintln!("add collection failed with: {}", err);
+        return ServerResponse::error(err, Status::InternalServerError);
     }
-    println!("user: {} -> {}", req.user, hash_string);
-    // todo: find user id
     let token = create_token(1).unwrap();
-    let json = json!(LoginResult::new(token));
+    let json = json!(SigninResult::new(token));
     ServerResponse::json(json, Status::Created)
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![login_options, login_post]
+    routes![signin_options, signin_post]
 }

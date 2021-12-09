@@ -30,7 +30,9 @@ use cors::CORS;
 
 // stigmark stuff
 mod stigmarks;
+mod token;
 mod login;
+mod signin;
 mod files;
 mod response;
 mod basicauth;
@@ -40,6 +42,7 @@ use stigmarks_sql_rs::sql::SqlStigmarksDB;
 fn main() {
     let mut api_routes = stigmarks::routes();
     api_routes.append(&mut login::routes());
+    api_routes.append(&mut signin::routes());
 
     rocket::ignite()
         .attach(CORS)
