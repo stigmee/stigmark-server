@@ -8,13 +8,20 @@ window.addEventListener('load', evt => {
     formEl.addEventListener('submit', evt => {
         evt.preventDefault();
         const data = new FormData(formEl);
+        const pass1 = data.get('pass1');
+        const pass2 = data.get('pass2');
+        if (pass1 != pass2) {
+            alert("different passwords");
+            return;
+        }
         const body = JSON.stringify({
             user: data.get('user'),
-            pass: data.get('pass'),
+            mail: data.get('mail'),
+            pass: pass1,
         });
         const headers = new Headers();
         headers.append('Content-Type', 'application/json');
-        const request = fetch('/api/v1/signin',
+        const request = fetch('/api/v1/signup',
             {
                 method: 'POST',
                 cache: 'no-cache',
@@ -24,7 +31,7 @@ window.addEventListener('load', evt => {
         request
             .then(response => {
                 if (response.status != 201) {
-                    alert("failed to signin");
+                    alert("failed to signup");
                     return;
                 }
                 response.json()
@@ -37,7 +44,7 @@ window.addEventListener('load', evt => {
                     });
             })
             .catch(err => {
-                alert("signin failed");
+                alert("signup failed");
                 return;
             });
     });

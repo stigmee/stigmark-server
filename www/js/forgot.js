@@ -7,14 +7,18 @@ window.addEventListener('load', evt => {
 
     formEl.addEventListener('submit', evt => {
         evt.preventDefault();
+        alert('todo: not implemented');
+
+        /* 
+        TODO:
+
         const data = new FormData(formEl);
         const body = JSON.stringify({
-            mail: data.get('mail'),
             pass: data.get('pass'),
         });
         const headers = new Headers();
         headers.append('Content-Type', 'application/json');
-        const request = fetch('/api/v1/login',
+        const request = fetch('/api/v1/forgot',
             {
                 method: 'POST',
                 cache: 'no-cache',
@@ -40,5 +44,6 @@ window.addEventListener('load', evt => {
                 alert("login failed");
                 return;
             });
+        */
     });
 });

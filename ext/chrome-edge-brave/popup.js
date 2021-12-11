@@ -51,32 +51,49 @@ async function send_urls_and_keywords(token, urls, keywords) {
         const res = await fetch(requestUrl, requestData);
         if (res.status >= 200 && res.status < 300) {
             debug_log('urls+keys sent');
-            return true;
+            return res.status;
         }
         debug_log(`urls+keys failed with status ${res.status}`);
+        return res.status;
     }
     catch (e) {
         debug_log(`urls+keys failed with exception ${e.message}`);
     }
-    return false;
+    return 0;
 }
 
 async function init_app(token) {
+    debug_log('init_app');
+
     const listEl = document.querySelector('ul');
-    if (!listEl)
+    if (!listEl) {
+        debug_log('ul not found');
         return 0;
+    }
 
     const keywordsEl = document.querySelector('textarea');
-    if (!keywordsEl)
+    if (!keywordsEl) {
+        debug_log('textarea not found');
         return 0;
+    }
 
     const onlyInputEl = document.querySelector('#onlySelected');
-    if (!onlyInputEl)
+    if (!onlyInputEl) {
+        debug_log('#onlySelected not found');
         return 0;
+    }
 
     const sendBtnEl = document.querySelector('#send');
-    if (!sendBtnEl)
+    if (!sendBtnEl) {
+        debug_log('#send not found');
         return 0;
+    }
+
+    const errorMsgEl = document.querySelector('#error_send');
+    if (!errorMsgEl) {
+        debug_log('#error_send not found');
+        return 0;
+    }
 
     const entries = [];
 
@@ -108,6 +125,9 @@ async function init_app(token) {
     });
 
     sendBtnEl.addEventListener('click', async () => {
+        debug_log('clicked send');
+        errorMsgEl.innerHTML = '';
+
         const urls = [];
         entries.forEach(entry => {
             if (entry.input.checked)
@@ -115,7 +135,11 @@ async function init_app(token) {
         });
 
         const keywords = keywordsEl.value.split(/[ \t]*,[ \t]*/g)
-        await send_urls_and_keywords(token, urls, keywords);
+        const is_ok = await send_urls_and_keywords(token, urls, keywords);
+        if (!is_ok) {
+            errorMsgEl.innerHTML = `could not send url and keywords`;
+            return;
+        }
 
         window.close();
     });
@@ -123,8 +147,8 @@ async function init_app(token) {
 
 async function login(email, passwd) {
     const body = {
-        email: email,
-        passwd: passwd,
+        mail: email,
+        pass: passwd,
     };
     const loginData = {
         method: 'POST',
@@ -150,50 +174,48 @@ async function login(email, passwd) {
 }
 
 async function init_login() {
+    debug_log('init_login');
+
     const emailEl = document.querySelector('#email');
-    if (!emailEl)
+    if (!emailEl) {
+        debug_log('#email not found');
         return 0;
+    }
 
     const passwordEl = document.querySelector('#password');
-    if (!passwordEl)
+    if (!passwordEl) {
+        debug_log('#password not found');
         return 0;
-
-    const guestBtnEl = document.querySelector('#guest');
-    if (!guestBtnEl)
-        return 0;
+    }
 
     const loginBtnEl = document.querySelector('#login');
-    if (!loginBtnEl)
+    if (!loginBtnEl) {
+        debug_log('#login not found');
         return 0;
+    }
 
     const signinEl = document.querySelector('#signin');
-    if (!signinEl)
-        return;
+    if (!signinEl) {
+        debug_log('#signin not found');
+        return 0;
+    }
+
+    const errorMsgEl = document.querySelector('#error_login');
+    if (!errorMsgEl) {
+        debug_log('#error_login not found');
+        return 0;
+    }
 
     const appEl = document.querySelector('#app');
-    if (!appEl)
+    if (!appEl) {
+        debug_log('#appEl not found');
         return;
-
-    guestBtnEl.addEventListener('click', async (evt) => {
-        debug_log('clicked guest');
-        evt.preventDefault();
-        const token = await login('', '');
-        debug_log('token');
-        debug_log(token);
-        if (token !== false) {
-            await chrome.storage.local.set({token: 'blah'});
-            const res = await chrome.storage.local.get('token');
-            debug_log(res);
-            signinEl.classList.add("hidden");
-            appEl.classList.remove("hidden");
-            init_app(token);
-            return;
-        }
-        // handle error
-    });
+    }
 
     loginBtnEl.addEventListener('click', async (evt) => {
         debug_log('clicked login');
+        errorMsgEl.innerHTML = '';
+
         evt.preventDefault();
         const token = await login(emailEl.value, passwordEl.value)
         if (token !== false) {
@@ -203,6 +225,8 @@ async function init_login() {
             return;
         }
         // handle error
+        debug_log('could not login');
+        errorMsgEl.innerHTML = "could not login";
     });
 }
 
@@ -241,6 +265,8 @@ window.addEventListener('load', async () => {
         await chrome.storage.local.remove('token');
         window.close();
     });
+
+    debug_log('testing if already logged');
 
     const token = await is_logged();
     if (!token) {

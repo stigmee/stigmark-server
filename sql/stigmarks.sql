@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS `users` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `name` varchar(256) NOT NULL,
     `email` varchar(256) NOT NULL UNIQUE,
-    `hash` binary(255) NOT NULL,
+    `role` int(11) NOT NULL,
+    `hash` varchar(128) NOT NULL,
     `creation_date` datetime NOT NULL DEFAULT NOW(),
     PRIMARY KEY (`id`)
 );

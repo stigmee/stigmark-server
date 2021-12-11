@@ -24,54 +24,54 @@
 use serde::{Deserialize, Serialize};
 use rocket::http::{Status};
 use rocket_contrib::json::Json;
-use std::fmt::Write;
 use rocket::{State, Route};
 use rocket_contrib::json;
 use crate::response::ServerResponse;
-use crate::token::create_token;
-use stigmarks_sql_rs::sql::SqlStigmarksDB;
+use crate::token::{create_token};
+use stigmarks_sql_rs::sql::{SqlStigmarksDB, users::Role};
 
 #[derive(Deserialize)]
-struct SigninRequest {
+struct SignupRequest {
     user: String,
     mail: String,
     pass: String,
 }
 
 #[derive(Serialize)]
-struct SigninResult {
+struct SignupResult {
     token: String,
 }
 
 #[allow(dead_code)]
-impl SigninResult {
+impl SignupResult {
     fn new<S: Into<String>>(token: S) -> Self {
-        SigninResult {
+        SignupResult {
             token: token.into(),
         }
     }
 }
 
-#[options("/signin")]
-fn signin_options() ->ServerResponse {
+#[options("/signup")]
+fn signup_options() ->ServerResponse {
     ServerResponse::ok()
 }
 
-#[post("/signin", format = "json", data = "<req>")]
-fn signin_post(state: State<SqlStigmarksDB>, req: Json<SigninRequest>) -> ServerResponse {
+#[post("/signup", format = "json", data = "<req>")]
+fn signup_post(state: State<SqlStigmarksDB>, req: Json<SignupRequest>) -> ServerResponse {
+    println!("signup: user '{}' pass '{}'", &req.mail, &req.pass);
     let passwd = &req.pass;
     let hash = bcrypt::hash(passwd, 6).unwrap();
     let stigmarks_db = state.inner();
-    let res = stigmarks_db.add_user(req.user, req.mail, hash.as_bytes().iter().collect());
+    let res = stigmarks_db.add_user(&req.user, &req.mail, Role::User, hash.as_str().as_bytes().to_vec());
     if let Err(err) = res { 	
-        eprintln!("add collection failed with: {}", err);
+        eprintln!("add user failed with: {}", err);
         return ServerResponse::error(err, Status::InternalServerError);
     }
-    let token = create_token(1).unwrap();
-    let json = json!(SigninResult::new(token));
+    let token = create_token(res.unwrap()).unwrap();
+    let json = json!(SignupResult::new(token));
     ServerResponse::json(json, Status::Created)
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![signin_options, signin_post]
+    routes![signup_options, signup_post]
 }

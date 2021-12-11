@@ -26,22 +26,24 @@ use serde::{Serialize, Deserialize};
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Claims {
+pub struct Claims {
     exp: usize, // expiration time
     uid: u32,
+}
+
+#[allow(dead_code)]
+impl Claims {
+    pub fn decode_from(token: String) -> Claims {
+        let claims = decode::<Claims>(&token, &DecodingKey::from_secret("secret".as_ref()), &Validation::default()).unwrap();
+        claims.claims
+    }
 }
 
 #[allow(dead_code)]
 pub fn create_token(user_id: u32) -> Result<String, Error> {
     let my_claims = Claims {
         uid: user_id,
-        exp: 0,
+        exp: 0, // TODO ?
     };
     encode(&Header::default(), &my_claims, &EncodingKey::from_secret("secret".as_ref()))
-}
-
-#[allow(dead_code)]
-pub fn decode_token(token: &String) -> u32 {
-    let my_claims = decode::<Claims>(&token, &DecodingKey::from_secret("secret".as_ref()), &Validation::default()).unwrap();
-    my_claims.claims.uid
 }

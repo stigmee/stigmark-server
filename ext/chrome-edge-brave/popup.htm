@@ -86,6 +86,11 @@
         .hidden {
             display: none;
         }
+
+        #error_send, #error_login {
+            text-align: right;
+            color: #f00;
+        }
     </style>
 </head>
 
@@ -99,9 +104,11 @@
             <h2>Please login first:</h2>
             <input id="email" type="text" placeholder="name@domain.ltd" />
             <input id="password" type="password" placeholder="password" />
+            <div>
+                <p id="error_login"></p>
+            </div>
             <div><a href="https://stigmark.badro.fr">forgot password ?</a></div>
             <div class="right">
-                <button id="guest">Login as guest</button>
                 <button id="login">Login</button>
             </div>
         </form>
@@ -118,6 +125,9 @@
         </div>
         <div>
             <input id="onlySelected" type="checkbox"></input> Save only selected tabs
+        </div>
+        <div>
+            <p id="error_send"></p>
         </div>
         <div class="right">
             <button id="send">Send</button>

@@ -24,7 +24,6 @@
 use serde::{Deserialize, Serialize};
 use rocket::http::{Status};
 use rocket_contrib::json::Json;
-use std::fmt::Write;
 use rocket::{State, Route};
 use rocket_contrib::json;
 use crate::response::ServerResponse;
@@ -33,7 +32,7 @@ use stigmarks_sql_rs::sql::SqlStigmarksDB;
 
 #[derive(Deserialize)]
 struct LoginRequest {
-    user: String,
+    mail: String,
     pass: String,
 }
 
@@ -56,17 +55,28 @@ fn login_options() ->ServerResponse {
     ServerResponse::ok()
 }
 
+use std::str;
+
 #[post("/login", format = "json", data = "<req>")]
 fn login_post(state: State<SqlStigmarksDB>, req: Json<LoginRequest>) -> ServerResponse {
-    let passwd = &req.pass;
-    let hash = bcrypt::hash(passwd, 6).unwrap();
-    let mut hash_string = String::new();
-    for byte in hash.bytes() {
-        write!(&mut hash_string, "{:X}", byte).expect("Unable to write");
+    println!("login: user '{}' pass '{}'", &req.mail, &req.pass);
+    if req.mail == "" || req.pass == "" {
+        eprintln!("login: invalid parameters");
+        return ServerResponse::error("invalid parameters", Status::BadRequest);
     }
-    println!("user: {} -> {}", req.user, hash_string);
-    // todo: find user id
-    let token = create_token(1).unwrap();
+    let stigmarks_db = state.inner();
+    let res = stigmarks_db.get_user_by_email(&req.mail);
+    if let Err(err) = res { 	
+        eprintln!("get user {} failed with: {}", &req.mail, err);
+        return ServerResponse::error("user not found", Status::Unauthorized);
+    }
+    // todo: remove unwraps
+    let user = res.unwrap();
+    if !bcrypt::verify(&req.pass, str::from_utf8(&user.hash).unwrap()).unwrap() {
+        eprintln!("get user '{}' failed: invalid user/pass combination", &req.mail);
+        return ServerResponse::error("invalid user/pass combination", Status::Unauthorized);
+    }
+    let token = create_token(user.id).unwrap();
     let json = json!(LoginResult::new(token));
     ServerResponse::json(json, Status::Created)
 }

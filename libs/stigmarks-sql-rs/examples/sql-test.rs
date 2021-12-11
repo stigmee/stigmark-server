@@ -41,6 +41,7 @@ fn main() {
     let user_id_0 = stigmarks_db.add_user(
         String::from("Philippe Anel"),
         String::from("zexigh@gmail.com"),
+        Role::Admin,
         vec![],
     );
     match user_id_0 {
@@ -101,6 +102,7 @@ fn main() {
                 let req = stigmarks_db.add_user(
                     format!("user {}", rand_string),
                     format!("zexigh@{}.com", rand_string),
+                    Role::User,
                     vec![],
                 );
                 let user_id = if let Ok(user_id) = req {
