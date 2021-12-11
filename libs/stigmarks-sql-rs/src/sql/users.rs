@@ -24,7 +24,7 @@
 use mysql::chrono::NaiveDateTime;
 use mysql::params;
 use mysql::prelude::Queryable;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub use crate::sql::SqlStigmarksDB;
 
@@ -53,6 +53,8 @@ pub struct SqlUser {
     pub email: String,
     pub hash: Vec<u8>,
     pub creation_date: NaiveDateTime,
+    pub disabled_at: Option<mysql::chrono::NaiveDateTime>,
+    pub disabled_by: Option<u32>,
 }
 
 #[allow(dead_code)]
@@ -84,7 +86,7 @@ impl SqlStigmarksDB {
     pub fn get_user_by_id(self: &Self, user_id: u32) -> Result<SqlUser, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_first(
-            r"SELECT id, name, email, hash, creation_date FROM users where id=:id",
+            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by FROM users where id=:id",
             params! {
                 "id" => user_id,
             },
@@ -93,13 +95,17 @@ impl SqlStigmarksDB {
             return Err(format!("get_user_by_id failed: {}", err));
         }
         let row = res.unwrap();
-        let res = row.map(|(id, name, email, hash, creation_date)| SqlUser {
-            id,
-            name,
-            email,
-            hash,
-            creation_date,
-        });
+        let res = row.map(
+            |(id, name, email, hash, creation_date, disabled_at, disabled_by)| SqlUser {
+                id,
+                name,
+                email,
+                hash,
+                creation_date,
+                disabled_at,
+                disabled_by,
+            },
+        );
         if let None = res {
             return Err(format!("user {} not found", user_id));
         }
@@ -110,14 +116,16 @@ impl SqlStigmarksDB {
     pub fn get_all_users(self: &Self) -> Result<Vec<SqlUser>, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_map(
-            r"SELECT id, name, email, hash, creation_date FROM users",
+            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by FROM users",
             {},
-            |(id, name, email, hash, creation_date)| SqlUser {
+            |(id, name, email, hash, creation_date, disabled_at, disabled_by)| SqlUser {
                 id,
                 name,
                 email,
                 hash,
                 creation_date,
+                disabled_at,
+                disabled_by,
             },
         );
         if let Err(err) = res {
@@ -127,13 +135,10 @@ impl SqlStigmarksDB {
     }
 
     // todo: -> Result<SqlUser, Error>
-    pub fn get_user_by_email(
-        self: &Self,
-        user_email: &String,
-    ) -> Result<SqlUser, String> {
+    pub fn get_user_by_email(self: &Self, user_email: &String) -> Result<SqlUser, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_first(
-            r"SELECT id, name, email, hash, creation_date FROM users where email=:email",
+            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by FROM users where email=:email",
             params! {
                 "email" => user_email
             },
@@ -142,12 +147,14 @@ impl SqlStigmarksDB {
             return Err(format!("get_user_by_auth failed: {}", err));
         }
         let row = res.unwrap();
-        let res = row.map(|(id, name, email, hash, creation_date)| SqlUser {
+        let res = row.map(|(id, name, email, hash, creation_date, disabled_at, disabled_by)| SqlUser {
             id,
             name,
             email,
             hash,
             creation_date,
+            disabled_at,
+            disabled_by,
         });
         if let None = res {
             return Err(format!("user '{}' not found", user_email));

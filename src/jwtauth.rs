@@ -24,20 +24,23 @@ use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome};
 use rocket::Request;
 
-// use stigmarks_sql_rs::sql::{users::SqlUser, SqlStigmarksDB};
-use stigmarks_sql_rs::sql::{users::SqlUser};
+use crate::token::Claims;
 
 #[allow(dead_code)]
 pub struct JwtAuth {
-    pub user: Option<SqlUser>,
+    pub claims: Option<Claims>,
 }
 
 impl JwtAuth {
     /// Creates a new [JwtAuth] struct/request guard from a given plaintext
     /// http auth header or returns a [Option::None] if invalid
     pub fn new<T: Into<String>>(token: T) -> Option<Self> {
-        println!("JwtAuth: {}", token.into());
-        Some(Self { user: None })
+        let claims = Claims::decode_from(token.into());
+        if let Err(err) = claims {
+            eprintln!("Jwt error: {}", err);
+            return None;
+        }
+        Some(Self { claims: Some(claims.unwrap()) })
     }
 }
 
@@ -76,7 +79,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for JwtAuth {
         // can be provided through header
         let keys: Vec<&str> = request.headers().get("Authorization").collect();
         match keys.len() {
-            0 => Outcome::Success(JwtAuth { user: None }),
+            0 => Outcome::Success(JwtAuth { claims: None }),
             1 => {
                 let key = keys[0];
                 if key.len() > 7 && &key[..7] == "Bearer " {

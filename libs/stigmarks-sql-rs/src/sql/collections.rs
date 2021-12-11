@@ -1,28 +1,28 @@
-// 
+//
 //  Stigmee: A 3D browser and decentralized social network.
 //  Copyright 2021 Philippe Anel <zexigh@gmail.com>
-// 
+//
 //  This file is part of Stigmee.
-// 
+//
 //  Project : stigmarks-sql
 //  Version : 0.0-1
-// 
+//
 //  Stigmee is free software: you can redistribute it and/or modify it
 //  under the terms of the GNU General Public License as published by
 //  the Free Software Foundation, either version 3 of the License, or
 //  (at your option) any later version.
-// 
+//
 //  This program is distributed in the hope that it will be useful, but
 //  WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 //  General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
+//
 
-use mysql::prelude::{Queryable};
-use mysql::{params};
+use mysql::params;
+use mysql::prelude::Queryable;
 // use mysql::chrono::NaiveDateTime;
 
 use crate::sql::SqlStigmarksDB;
@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS `collections` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `user_id` int(11) NOT NULL,
     `creation_date` datetime NOT NULL DEFAULT NOW(),
-    `hidden` tinyint(1) NOT NULL DEFAULT FALSE,
+    `hidden_at` datetime DEFAULT NULL,
+    `hidden_by` int(11) DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `fk_collectionuser` (`user_id`),
     CONSTRAINT `fk_collections_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
@@ -44,7 +45,8 @@ pub struct SqlCollection {
     pub id: u32,
     pub user_id: u32,
     pub creation_date: mysql::chrono::NaiveDateTime,
-    pub hidden: bool,
+    pub hidden_by: Option<mysql::chrono::NaiveDateTime>,
+    pub hidden_at: Option<u32>,
 }
 
 /*
@@ -117,11 +119,9 @@ impl SqlStigmarksDB {
                 "keyword" => keyword,
             },
         ) {
-            Ok(row) => {
-                match row.map(|id| id) {
-                    Some(id) => Ok(id),
-                    None => Err(format!("keyword {} not found", keyword)),
-                }
+            Ok(row) => match row.map(|id| id) {
+                Some(id) => Ok(id),
+                None => Err(format!("keyword {} not found", keyword)),
             },
             Err(err) => Err(format!("{}", err)),
         }
@@ -135,11 +135,9 @@ impl SqlStigmarksDB {
                 "url" => url,
             },
         ) {
-            Ok(row) => {
-                match row.map(|id| id) {
-                    Some(id) => Ok(id),
-                    None => Err(format!("url {} not found", url)),
-                }
+            Ok(row) => match row.map(|id| id) {
+                Some(id) => Ok(id),
+                None => Err(format!("url {} not found", url)),
             },
             Err(err) => Err(format!("{}", err)),
         }
@@ -195,12 +193,16 @@ impl SqlStigmarksDB {
         }
     }
 
-    fn add_keyword_to_collection(self: &Self, collection_id: u32, keyword_id: u32) -> Result<(), String> {
+    fn add_keyword_to_collection(
+        self: &Self,
+        collection_id: u32,
+        keyword_id: u32,
+    ) -> Result<(), String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_drop(
             r"INSERT IGNORE INTO keyword_lists (collection_id, keyword_id) VALUES (:collection_id, :keyword_id)",
             params! {
-                    "collection_id" => collection_id,
+                "collection_id" => collection_id,
                     "keyword_id" => keyword_id,
             },
         ) {
@@ -224,7 +226,12 @@ impl SqlStigmarksDB {
     }
 
     // todo: -> Result<u32, Error>
-    pub fn add_collection(self: &Self, user_id: u32, keywords: &Vec<String>, urls: &Vec<String>) -> Result<u32, String> {
+    pub fn add_collection(
+        self: &Self,
+        user_id: u32,
+        keywords: &Vec<String>,
+        urls: &Vec<String>,
+    ) -> Result<u32, String> {
         // create collection
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_drop(
@@ -240,27 +247,29 @@ impl SqlStigmarksDB {
                     match self.add_keyword(keyword) {
                         Ok(keyword_id) => {
                             match self.add_keyword_to_collection(collection_id, keyword_id) {
-                                Ok(_) => {},
-                                Err(err) => { return Err(err); },
+                                Ok(_) => {}
+                                Err(err) => {
+                                    return Err(err);
+                                }
                             }
-                        },
+                        }
                         Err(err) => {
                             return Err(err);
-                        },
+                        }
                     }
                 }
                 // add urls
                 for url in urls {
                     match self.add_url(url) {
-                        Ok(url_id) => {
-                            match self.add_url_to_collection(collection_id, url_id) {
-                                Ok(_) => {},
-                                Err(err) => { return Err(err); },
+                        Ok(url_id) => match self.add_url_to_collection(collection_id, url_id) {
+                            Ok(_) => {}
+                            Err(err) => {
+                                return Err(err);
                             }
                         },
                         Err(err) => {
                             return Err(err);
-                        },
+                        }
                     }
                 }
                 Ok(collection_id)
@@ -273,17 +282,18 @@ impl SqlStigmarksDB {
     pub fn get_collection_by_id(self: &Self, collection_id: u32) -> Result<SqlCollection, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_first(
-            r"SELECT id, user_id, creation_date, hidden FROM collections where id=:id",
+            r"SELECT id, user_id, creation_date, hidden_at, hidden_by FROM collections where id=:id",
             params! {
                 "id" => collection_id,
             },
         ) {
             Ok(row) => {
-                match row.map(|(id, user_id, creation_date, hidden)| SqlCollection {
+                match row.map(|(id, user_id, creation_date, hidden_at, hidden_by)| SqlCollection {
                     id,
                     user_id,
                     creation_date,
-                    hidden,
+                    hidden_at,
+                        hidden_by,
                 }) {
                     Some(collection) => Ok(collection),
                     None => Err(format!("collection {} not found", collection_id)),
@@ -297,21 +307,25 @@ impl SqlStigmarksDB {
     pub fn get_all_collections(self: &Self) -> Result<Vec<SqlCollection>, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_map(
-            r"SELECT id, user_id, creation_date, hidden FROM collections",
+            r"SELECT id, user_id, creation_date, hidden_at, hidden_by FROM collections",
             {},
-            |(id, user_id, creation_date, hidden)| SqlCollection {
+            |(id, user_id, creation_date, hidden_at, hidden_by)| SqlCollection {
                 id,
                 user_id,
                 creation_date,
-                hidden,
-            }
+                hidden_at,
+                hidden_by,
+            },
         ) {
             Ok(rows) => Ok(rows),
             Err(err) => Err(format!("{}", err)),
         }
     }
 
-    pub fn get_collection_urls_by_id(self: &Self, collection_id: u32) -> Result<Vec<String>, String> {
+    pub fn get_collection_urls_by_id(
+        self: &Self,
+        collection_id: u32,
+    ) -> Result<Vec<String>, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_map(
             r"SELECT url FROM urls, url_lists where url_lists.collection_id=:collection_id and urls.id=url_lists.url_id",
@@ -325,7 +339,10 @@ impl SqlStigmarksDB {
         }
     }
 
-    pub fn get_collection_keywords_by_id(self: &Self, collection_id: u32) -> Result<Vec<String>, String> {
+    pub fn get_collection_keywords_by_id(
+        self: &Self,
+        collection_id: u32,
+    ) -> Result<Vec<String>, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_map(
             r"SELECT keyword FROM keywords, keyword_lists where keyword_lists.collection_id=:collection_id and keywords.id=keyword_lists.keyword_id",

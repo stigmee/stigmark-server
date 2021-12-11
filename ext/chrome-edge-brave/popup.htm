@@ -37,11 +37,16 @@
             background-color: #055;
         }
 
-        input, textarea {
+        input,
+        textarea {
             padding: 3px;
         }
 
-        div+div, div+input, input+div, input+input, h2+input {
+        div+div,
+        div+input,
+        input+div,
+        input+input,
+        h2+input {
             margin-top: 5px;
         }
 
@@ -79,7 +84,7 @@
             overflow-x: hidden;
         }
 
-        form > * {
+        form>* {
             width: 100%;
         }
 
@@ -87,7 +92,8 @@
             display: none;
         }
 
-        #error_send, #error_login {
+        #error_send,
+        #error_login {
             text-align: right;
             color: #f00;
         }
@@ -102,12 +108,13 @@
     <div id="signin" class="hidden">
         <form>
             <h2>Please login first:</h2>
+            <p>Don't have an account yet? <a id="signup" href="https://localhost:8000/signup.htm">Sign up</a></p>
             <input id="email" type="text" placeholder="name@domain.ltd" />
             <input id="password" type="password" placeholder="password" />
             <div>
                 <p id="error_login"></p>
             </div>
-            <div><a href="https://stigmark.badro.fr">forgot password ?</a></div>
+            <p><a id="forgot" href="https://localhost:8000/forgot.htm">forgot password ?</a></p>
             <div class="right">
                 <button id="login">Login</button>
             </div>
@@ -118,7 +125,7 @@
         <div class="right">
             <button id="logout">logout</button>
         </div>
-    
+
         <div>Please write associated keywords :</div>
         <div>
             <textarea rows=3 placeholder="keyword1, keyword2, keyword3, ..."></textarea>

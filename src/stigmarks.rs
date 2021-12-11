@@ -59,15 +59,15 @@ fn stigmarks_post(
     mark: Json<StigmarkRequest>,
 ) -> ServerResponse {
     let mut user_id = 0u32;
-    if let Some(user) = auth.user {
-        user_id = user.id;
+    if let Some(claims) = auth.claims {
+        user_id = claims.uid;
     }
     // We might need token from body
     if user_id > 0 {
         if let Some(token) = &mark.token {
             if let Some(auth) = JwtAuth::new(token) {
-                if let Some(user) = auth.user {
-                    user_id = user.id;
+                if let Some(claims) = auth.claims {
+                    user_id = claims.uid;
                 }
             }
         }
@@ -77,6 +77,11 @@ fn stigmarks_post(
         return ServerResponse::error("expected token", Status::Forbidden);
     }
     let stigmarks_db = state.inner();
+    if let Err(err) = stigmarks_db.get_user_by_id(user_id) {
+        println!("could not find user: {}", err);
+        return ServerResponse::error("user not found", Status::Forbidden);
+    }
+    // todo: check if user is still active
     let res = stigmarks_db.add_collection(user_id, &mark.keys, &mark.urls);
     if let Err(err) = res {
         eprintln!("add collection failed with: {}", err);

@@ -27,15 +27,19 @@ use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    exp: usize, // expiration time
-    uid: u32,
+    pub exp: usize, // expiration time
+    pub uid: u32,
 }
 
 #[allow(dead_code)]
 impl Claims {
-    pub fn decode_from(token: String) -> Claims {
-        let claims = decode::<Claims>(&token, &DecodingKey::from_secret("secret".as_ref()), &Validation::default()).unwrap();
-        claims.claims
+    pub fn decode_from(token: String) -> Result<Claims, String> {
+        // todo: remove unwrap
+        let claims = decode::<Claims>(&token, &DecodingKey::from_secret("secret".as_ref()), &Validation::default());
+        if let Err(err) = claims {
+            return Err(format!("could not decode token: {}", err));
+        }
+        Ok(claims.unwrap().claims)
     }
 }
 
@@ -43,7 +47,7 @@ impl Claims {
 pub fn create_token(user_id: u32) -> Result<String, Error> {
     let my_claims = Claims {
         uid: user_id,
-        exp: 0, // TODO ?
+        exp: 10000000000, // TODO
     };
     encode(&Header::default(), &my_claims, &EncodingKey::from_secret("secret".as_ref()))
 }

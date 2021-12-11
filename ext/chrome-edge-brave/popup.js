@@ -43,7 +43,8 @@ async function send_urls_and_keywords(token, urls, keywords) {
     const requestData = {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json; charset=utf-8'
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(body),
     };
@@ -145,32 +146,45 @@ async function init_app(token) {
     });
 }
 
-async function login(email, passwd) {
-    const body = {
-        mail: email,
-        pass: passwd,
-    };
-    const loginData = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: JSON.stringify(body),
-    };
-    try {
+function login(email, passwd) {
+    debug_log(`login: ${email}`);
+    return new Promise((resolve, reject) => {
+        debug_log(`login: in-promise`);
+        const body = {
+            mail: email,
+            pass: passwd,
+        };
+        const loginData = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: JSON.stringify(body),
+        };
         debug_log('sending login request');
-        const res = await fetch(loginUrl, loginData);
-        debug_log('fetch sent');
-        debug_log(res);
-        if (res.status >= 200 && res.status < 300) {
-            debug_log('logged in');
-            // TODO: extract token from answer
-            return "foo";
-        }
-        debug_log(`fetch failed with ${res.status}`);
-    }
-    catch (e) {
-        debug_log(`fetch failed with ${err}`);
-    }
-    return false;
+        fetch(loginUrl, loginData)
+            .then(res => {
+                debug_log(`fetch returned ${res.status}`);
+                if (res.status >= 200 && res.status < 300) {
+                    res.json()
+                        .then(data => {
+                            debug_log(`fetch data`);
+                            resolve(data);
+                        })
+                        .catch(err => {
+                            debug_log(`could not decode json: ${err}`)
+                            reject(err);
+                        })
+                        ;
+                    return true;
+                }
+                debug_log(`fetch failed`);
+                reject(`fetch failed`);
+            })
+            .catch(err => {
+                debug_log(`fetch crashed with ${err}`);
+                reject(`fetch crashed with ${err}`);
+            })
+            ;
+    });
 }
 
 async function init_login() {
@@ -212,21 +226,50 @@ async function init_login() {
         return;
     }
 
-    loginBtnEl.addEventListener('click', async (evt) => {
+    const signupEl = document.querySelector('#signup');
+    if (!signupEl) {
+        debug_log('#signup not found');
+        return;
+    }
+    signupEl.addEventListener('click', evt => {
+        chrome.tabs.create({url: 'http://localhost:8000/signup.htm'});
+    });
+
+    const forgotEl = document.querySelector('#forgot');
+    if (!forgotEl) {
+        debug_log('#forgot not found');
+        return;
+    }
+    forgotEl.addEventListener('click', evt => {
+        chrome.tabs.create({url: 'http://localhost:8000/forgot.htm'});
+    });
+
+    loginBtnEl.addEventListener('click', (evt) => {
         debug_log('clicked login');
         errorMsgEl.innerHTML = '';
 
         evt.preventDefault();
-        const token = await login(emailEl.value, passwordEl.value)
-        if (token !== false) {
-            signinEl.classList.add("hidden");
-            appEl.classList.remove("hidden");
-            init_app(token);
-            return;
-        }
-        // handle error
-        debug_log('could not login');
-        errorMsgEl.innerHTML = "could not login";
+        const token = login(emailEl.value, passwordEl.value)
+            .then(data => {
+                if (token !== false) {
+                    debug_log(`logged with token ${data.token}`);
+                    chrome.storage.local.set({ token: data.token })
+                        .catch(res => {
+                            errorMsgEl.innerHTML = `could update token`;
+                        })
+                        .then(_ => {
+                            signinEl.classList.add("hidden");
+                            appEl.classList.remove("hidden");
+                            init_app(data.token);
+                        })
+                    return;
+                }
+            })
+            .catch(err => {
+                // handle error
+                debug_log(`could not login: ${err}`);
+                errorMsgEl.innerHTML = `could not login: ${err}`;
+            });
     });
 }
 

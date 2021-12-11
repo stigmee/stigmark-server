@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS `users` (
     `role` int(11) NOT NULL,
     `hash` varchar(128) NOT NULL,
     `creation_date` datetime NOT NULL DEFAULT NOW(),
+    `disabled_at` datetime DEFAULT NULL,
+    `disabled_by` int(11) DEFAULT NULL,
     PRIMARY KEY (`id`)
 );
 
@@ -32,7 +34,8 @@ CREATE TABLE IF NOT EXISTS `collections` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `user_id` int(11) NOT NULL,
     `creation_date` datetime NOT NULL DEFAULT NOW(),
-    `hidden` tinyint(1) NOT NULL DEFAULT FALSE,
+    `hidden_at` datetime DEFAULT NULL,
+    `hidden_by` int(11) DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `fk_collectionuser` (`user_id`),
     CONSTRAINT `fk_collections_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
