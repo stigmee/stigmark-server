@@ -2,148 +2,71 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script type="module" src="popup.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            outline: none;
-            border: 0;
-            font-size: 14px;
-        }
-
-        html {
-            background-color: #ccc;
-            color: #000;
-            padding: 5px;
-            min-width: 300px;
-            max-height: 200px;
-        }
-
-        button {
-            background-color: #000;
-            color: #fff;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-
-        textarea {
-            resize: none;
-            background-color: #eee;
-            width: 100%;
-        }
-
-        button:hover {
-            background-color: #055;
-        }
-
-        input,
-        textarea {
-            padding: 3px;
-        }
-
-        div+div,
-        div+input,
-        input+div,
-        input+input,
-        h2+input {
-            margin-top: 5px;
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        h2 {
-            text-align: left;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        div.right {
-            text-align: right;
-        }
-
-        li {
-            position: relative;
-        }
-
-        input+span {
-            padding-left: 5px;
-        }
-
-        em {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            text-overflow: ellipsis;
-            background-color: #fff;
-            overflow-x: hidden;
-        }
-
-        form>* {
-            width: 100%;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        #error_send,
-        #error_login {
-            text-align: right;
-            color: #f00;
-        }
-    </style>
+    <link rel="stylesheet" href="css/popup.css">
 </head>
 
 <body>
-    <div>
-        <h1>Stigmarks</h1>
-    </div>
+    <header>
+        <h1>Stigmark v0.2</h1>
+    </header>
 
-    <div id="signin" class="hidden">
-        <form>
-            <h2>Please login first:</h2>
-            <p>Don't have an account yet? <a id="signup" href="https://localhost:8000/signup.htm">Sign up</a></p>
-            <input id="email" type="text" placeholder="name@domain.ltd" />
-            <input id="password" type="password" placeholder="password" />
-            <div>
-                <p id="error_login"></p>
-            </div>
-            <p><a id="forgot" href="https://localhost:8000/forgot.htm">forgot password ?</a></p>
+    <nav id="navbar" class="hidden"></nav>
+
+    <div id="message-box" class="hidden"></div>
+
+    <main>
+        <section id="signin-page" class="hidden">
+            <div><h2>Don't have an account yet?</h2> <a id="signup" href="#">Sign up</a></div>
+            <div>email:</div>
+            <div><input id="mail-input" type="text" placeholder="name@domain.ltd" /></div>
+            <div>password:</div>
+            <div><input id="pass-input" type="password" placeholder="shhhhhhhtttt...." /></div>
+            <div><a id="forgot" href="#">forgot password ?</a></div>
             <div class="right">
-                <button id="login">Login</button>
+                <button id="login-btn">Login</button>
             </div>
-        </form>
-    </div>
+        </section>
 
-    <div id="app" class="hidden">
-        <div class="right">
-            <button id="logout">logout</button>
-        </div>
+        <section id="follow-page" class="hidden">
+            <div><h2>Please type the email address you want to follow:</h2></div>
+            <div><input id="follow-input" type="email" placeholder="stigmer@example.com"></input></div>
+            <div class="right">
+                <button id="follow-btn">Follow</button>
+            </div>
+            <div id="follow-list-title">Stigmers you follow:</div>
+            <div>
+                <ul></ul>
+            </div>
+        </section>
 
-        <div>Please write associated keywords :</div>
-        <div>
-            <textarea rows=3 placeholder="keyword1, keyword2, keyword3, ..."></textarea>
-        </div>
-        <div>
-            <input id="onlySelected" type="checkbox"></input> Save only selected tabs
-        </div>
-        <div>
-            <p id="error_send"></p>
-        </div>
-        <div class="right">
-            <button id="send">Send</button>
-        </div>
-        <div>Tabs/URLs to send :</div>
-        <div>
-            <ul></ul>
-        </div>
-    </div>
+        <section id="search-page" class="hidden">
+            <div><input id="search-input" type="email" placeholder="keywords..."></input></div>
+            <div class="right">
+                <button id="search-btn">Search</button>
+            </div>
+        </section>
+
+        <section id="stigmark-page" class="hidden">
+            <div><h2>Please type associated keywords:</h2></div>
+            <div><textarea id="keywords-input" rows=3 placeholder="keyword1, keyword2, keyword3, ..."></textarea></div>
+            <div id="selected-only-div"><input id="selected-only-checkbox" type="checkbox"></input> Save only selected tabs</div>
+            <div class="right">
+                <button id="send-btn">Send</button>
+            </div>
+            <div id="stigmark-list-title">Tabs/URLs to send:</div>
+            <div>
+                <ul></ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <h3>Copyright &copy; 2021 Stigmee</h3>
+    </footer>
 </body>
 
 </html>

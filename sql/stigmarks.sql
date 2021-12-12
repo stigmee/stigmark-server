@@ -14,6 +14,11 @@ CREATE TABLE IF NOT EXISTS `users` (
     PRIMARY KEY (`id`)
 );
 
+CREATE TABLE IF NOT EXISTS `followers` (
+    `user_id` int(11) NOT NULL,
+    `follower_id` int(11) NOT NULL,
+);
+
 CREATE TABLE IF NOT EXISTS `keywords` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `keyword` varchar(256) NOT NULL,
