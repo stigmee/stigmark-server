@@ -42,16 +42,15 @@ struct StigmarkRequest {
 //     pub keys: Vec<String>,
 // }
 
-// OPTIONS https://stigmark.badro.com/api/v1/stigmarks
+// OPTIONS https://stigmark.stigmee.com/api/v1/stigmarks
 #[options("/stigmarks", rank = 1)]
 fn stigmarks_options() -> ServerResponse {
     ServerResponse::ok()
 }
 
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
-// use std::sync::Mutex;
 
-// POST https://stigmark.badro.com/api/v1/stigmarks
+// POST https://stigmark.stigmee.com/api/v1/stigmarks
 #[post("/stigmarks", format = "json", data = "<mark>", rank = 1)]
 fn stigmarks_post(
     auth: JwtAuth,

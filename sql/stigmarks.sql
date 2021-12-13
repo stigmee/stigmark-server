@@ -11,12 +11,16 @@ CREATE TABLE IF NOT EXISTS `users` (
     `creation_date` datetime NOT NULL DEFAULT NOW(),
     `disabled_at` datetime DEFAULT NULL,
     `disabled_by` int(11) DEFAULT NULL,
+    `is_private` int(1) NOT NULL DEFAULT 0,
+    `is_anonymous` int(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`)
 );
 
 CREATE TABLE IF NOT EXISTS `followers` (
     `user_id` int(11) NOT NULL,
     `follower_id` int(11) NOT NULL,
+    `authorized_at` datetime DEFAULT NULL,
+    `forbidden_at` datetime DEFAULT NULL,
 );
 
 CREATE TABLE IF NOT EXISTS `keywords` (

@@ -161,4 +161,73 @@ impl SqlStigmarksDB {
         }
         Ok(res.unwrap())
     }
+
+    // todo: -> Result<u32, Error>
+    pub fn add_user_subscription(self: &Self, user_id: u32, follower_id: u32, authorize: bool) -> Result<u32, String> {
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        let mut req = r"INSERT INTO followers (user_id, follower_id) VALUES (:user_id, :follower_id)";
+        if authorize {
+            req = r"INSERT INTO followers (user_id, follower_id, authorized_at) VALUES (:user_id, :follower_id, NOW())"
+        }
+        let res = conn.exec_drop(
+            req,
+            params! {
+                "user_id" => user_id,
+                "follower_id" => follower_id,
+            },
+        );
+        if let Err(err) = res {
+            return Err(format!("add_user_subscription failed: {}", err));
+        }
+        Ok(conn.last_insert_id() as u32)
+    }
+
+    // todo: -> Result<Vec<SqlUser>, Error>
+    pub fn get_user_followers(self: &Self, user_id: u32) -> Result<Vec<SqlUser>, String> {
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        let req = r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by FROM users U, followers F WHERE F.user_id=:user_id AND U.id=F.follower_id";
+        let res = conn.exec_map(
+            req,
+            params! {
+                "user_id" => user_id,
+            },
+            |(id, name, email, hash, creation_date, disabled_at, disabled_by)| SqlUser {
+                id,
+                name,
+                email,
+                hash,
+                creation_date,
+                disabled_at,
+                disabled_by,
+            },
+        );
+        if let Err(err) = res {
+            return Err(format!("get_user_followers failed: {}", err));
+        }
+        Ok(res.unwrap())
+    }
+
+    // todo: -> Result<Vec<SqlUser>, Error>
+    pub fn get_user_subscriptions(self: &Self, follower_id: u32) -> Result<Vec<SqlUser>, String> {
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        let res = conn.exec_map(
+            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by FROM users U, followers F WHERE F.follower_id=:follower_id AND U.id=F.user_id",
+            params! {
+                "follower_id" => follower_id,
+            },
+            |(id, name, email, hash, creation_date, disabled_at, disabled_by)| SqlUser {
+                id,
+                name,
+                email,
+                hash,
+                creation_date,
+                disabled_at,
+                disabled_by,
+            },
+        );
+        if let Err(err) = res {
+            return Err(format!("get_user_subscriptions failed: {}", err));
+        }
+        Ok(res.unwrap())
+    }
 }

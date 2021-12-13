@@ -36,16 +36,16 @@ struct FollowRequest {
     token: Option<String>,
 }
 
-// OPTIONS https://stigmark.stigmee.com/api/v1/stigmers
-#[options("/stigmers", rank = 1)]
+// OPTIONS https://stigmark.stigmee.com/api/v1/search
+#[options("/search", rank = 1)]
 fn follow_options() -> ServerResponse {
     ServerResponse::ok()
 }
 
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
 
-// POST https://stigmark.stigmee.com/api/v1/stigmers
-#[post("/stigmers", format = "json", data = "<mark>", rank = 1)]
+// POST https://stigmark.stigmee.com/api/v1/search
+#[post("/search", format = "json", data = "<mark>", rank = 1)]
 fn follow_post(
     auth: JwtAuth,
     state: State<SqlStigmarksDB>,
