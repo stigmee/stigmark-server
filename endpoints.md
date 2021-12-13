@@ -27,55 +27,90 @@ todo: add email verification
 | Method | Description |
 | :-- | :-- |
 | POST | create collection |
-| GET | enumerate collections <br/> from=:user_id |
+| GET | enumerate collections <br/> - from=:user_id |
 
 ### /api/v1/stigmarks/:collection_id
-          GET         -> get collection
-          DELETE      -> remove collection
+
+| Method | Description |
+| :-- | :-- |
+| GET | get collection | 
+| DELETE | remove collection | 
+
 ### /api/v1/stigmarks/:collection_id/urls
-          POST        -> add url to collection
-          GET         -> get urls of collection
+
+| Method | Description |
+| :-- | :-- |
+| POST | add url to collection |
+| GET | get urls of collection |
+
 ### /api/v1/stigmarks/:collection_id/urls/:url_id
-          DELETE      -> remove url from collection
+
+| Method | Description |
+| :-- | :-- |
+| DELETE | remove url from collection |
+
 ### /api/v1/stigmarks/:collection_id/keywords
-          POST        -> add keyword to collection
-          GET         -> get keywords of collection
+
+| Method | Description |
+| :-- | :-- |
+| POST | add keyword to collection |
+| GET | get keywords of collection |
+
 ### /api/v1/stigmarks/:collection_id/keywords/:keyword_id
-          DELETE      -> remove keywords from collection
+
+| Method | Description |
+| :-- | :-- |
+| DELETE | remove keywords from collection |
 
 ## search          
 
-      # note: this will search into all users except private ones I'm not following
-      # todo: search by synonyms, incomplete words, etc...
+    note: this will search into all users except private ones I'm not following
+
+    todo: search by synonyms, incomplete words, etc...
+
 ### /api/v1/search
-          GET         -> search
-              q=:keywords
-              from=:user_id
-          # todo: add stuff from IA team
+
+| Method | Description | Parametes |
+| :-- | :-- | :-- |
+| GET | search | q=:keywords <br /> from=:user_id |
+
+    todo: add stuff from IA team
 
 ## stigmers: the ones I follow
 
 ### /api/v1/stigmers        
-          POST        -> request subscription to stigmer
-              # todo: notify stigmer and wait for authorization
-          GET         -> get stigmers
-              # todo: subscription can be pending
+
+| Method | Description | Note |
+| :-- | :-- | :-- |
+| POST | request subscription to stigmer | todo: notify stigmer and wait for authorization |
+| GET | get stigmers | todo: subscription can be pending |
 
 ## followers: the ones who follow me
 
 ### /api/v1/followers
-          GET         -> get followers
+
+| Method | Description |
+| :-- | :-- |
+| GET | get followers |
+
 ### /api/v1/followers/:user_id
-          PUT         -> (set authorized_at, remove forbidden_at)
-          DELETE      -> remove from followers (set forbidden_at, remove authorized_at)
+
+| Method | Description |
+| :-- | :-- |
+| PUT | authorize follower to follow (set authorized_at, remove forbidden_at) |
+| DELETE | remove from followers (set forbidden_at, remove authorized_at) |
 
 # todo: events
 
 ### /api/v1/events/like/:url_id
-          POST        -> like url
-          DELETE      -> unlink url
+
+| Method | Description |
+| :-- | :-- |
+| POST | like url |
+| DELETE | unlink url |
 
 # todo: admin stuff
       
 ### /api/v1/logs ?
+
 ### /api/v1/stats ?
