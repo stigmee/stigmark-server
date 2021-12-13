@@ -3,8 +3,8 @@
 ## login
 
 ### /api/v1/login
-|POST   |create session     |
-|DELETE |logout ?           |
+| POST   | create session     |
+| DELETE | logout ?           |
 
 note: how to ban a user immediatly / revoke token ?
 
