@@ -27,8 +27,7 @@ todo: add email verification
 | Method | Description |
 | :-- | :-- |
 | POST | create collection |
-| GET | enumerate collections |
-| --- | from=:user_id |
+| GET | enumerate collections <br/> from=:user_id |
 
 ### /api/v1/stigmarks/:collection_id
           GET         -> get collection
