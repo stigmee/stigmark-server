@@ -13,16 +13,22 @@ note: how to ban a user immediatly / revoke token ?
 ## signup
 
 ### /api/v1/signup
-|POST   |register user      |
+
+| Method | Description |
+| :-- | :-- |
+| POST | register user |
 
 todo: add email verification
 
 ## stigmarks
 
 ### /api/v1/stigmarks
-| POST   |create collection      |
-| GET    |enumerate collections  |
-| ---    |from=:user_id          |
+
+| Method | Description |
+| :-- | :-- |
+| POST | create collection |
+| GET | enumerate collections |
+| --- | from=:user_id |
 
 ### /api/v1/stigmarks/:collection_id
           GET         -> get collection
