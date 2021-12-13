@@ -3,8 +3,7 @@
 ## login
 
 ### /api/v1/login
-| POST   | create session     |
-| DELETE | logout ?           |
+| POST | create session |
 
 note: how to ban a user immediatly / revoke token ?
 
@@ -18,9 +17,9 @@ todo: add email verification
 ## stigmarks
 
 ### /api/v1/stigmarks
-|POST   |create collection      |
-|GET    |enumerate collections  |
-        |from=:user_id          |
+| POST   |create collection      |
+| GET    |enumerate collections  |
+| ---    |from=:user_id          |
 
 ### /api/v1/stigmarks/:collection_id
           GET         -> get collection
