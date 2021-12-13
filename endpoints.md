@@ -4,6 +4,8 @@
 
 ### /api/v1/login
 
+| Method | Description |
+| :-- | :-- |
 | POST | create session |
 
 note: how to ban a user immediatly / revoke token ?
