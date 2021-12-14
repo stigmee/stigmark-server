@@ -29,7 +29,7 @@ window.addEventListener('load', evt => {
                 }
                 response.json()
                     .then(json => {
-                        console.log(json);
+                        window.location.href = `/search.htm?token=${json.token}`;
                     })
                     .catch(err => {
                         alert("could not decode json");

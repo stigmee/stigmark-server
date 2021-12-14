@@ -1,4 +1,5 @@
 [X] back:       document api
+[ ] back:       do not insert empty keywords / urls
 [ ] back:       hide password on logs
 [ ] back:       allow private users
 [ ] back:       finish follow table
