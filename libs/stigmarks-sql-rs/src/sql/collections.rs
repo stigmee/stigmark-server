@@ -21,69 +21,20 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+use crate::sql::SqlStigmarksDB;
+pub use mysql::chrono::NaiveDateTime;
 use mysql::params;
 use mysql::prelude::Queryable;
-// use mysql::chrono::NaiveDateTime;
+use serde::Serialize;
 
-use crate::sql::SqlStigmarksDB;
-
-/*
-CREATE TABLE IF NOT EXISTS `collections` (
-    `id` int(11) NOT NULL AUTO_INCREMENT,
-    `user_id` int(11) NOT NULL,
-    `creation_date` datetime NOT NULL DEFAULT NOW(),
-    `hidden_at` datetime DEFAULT NULL,
-    `hidden_by` int(11) DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    KEY `fk_collectionuser` (`user_id`),
-    CONSTRAINT `fk_collections_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-);
-*/
-
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct SqlCollection {
     pub id: u32,
     pub user_id: u32,
-    pub creation_date: mysql::chrono::NaiveDateTime,
-    pub hidden_by: Option<mysql::chrono::NaiveDateTime>,
+    pub creation_date: NaiveDateTime,
+    pub hidden_by: Option<NaiveDateTime>,
     pub hidden_at: Option<u32>,
 }
-
-/*
-CREATE TABLE IF NOT EXISTS `keywords` (
-    `id` int(11) NOT NULL AUTO_INCREMENT,
-    `keyword` varchar(256) NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `keyword` (`keyword`)
-);
-
-CREATE TABLE IF NOT EXISTS `keyword_lists` (
-    `collection_id` int(11) NOT NULL AUTO_INCREMENT,
-    `keyword_id` int(11) NOT NULL,
-    KEY `collection_id` (`collection_id`),
-    KEY `keyword_id` (`keyword_id`),
-    CONSTRAINT `fk_keyword_lists_collections_id` FOREIGN KEY (`collection_id`) REFERENCES `collections` (`id`),
-    CONSTRAINT `fk_keyword_lists_keywords_id` FOREIGN KEY (`keyword_id`) REFERENCES `keywords` (`id`)
-);
-*/
-
-/*
-CREATE TABLE IF NOT EXISTS `urls` (
-    `id` int(11) NOT NULL AUTO_INCREMENT,
-    `url` varchar(2048) NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `url` (`url`) USING HASH
-);
-
-CREATE TABLE IF NOT EXISTS `url_lists` (
-    `collection_id` int(11) NOT NULL AUTO_INCREMENT,
-    `url_id` int(11) NOT NULL,
-    KEY `collection_id` (`collection_id`),
-    KEY `url_id` (`url_id`),
-    CONSTRAINT `fk_url_lists_collection_id` FOREIGN KEY (`collection_id`) REFERENCES `collections` (`id`),
-    CONSTRAINT `fk_url_lists_url_id` FOREIGN KEY (`url_id`) REFERENCES `urls` (`id`)
-);
-*/
 
 // #[derive(Debug, PartialEq, Eq)]
 // pub struct SqlKeyword {
@@ -95,18 +46,6 @@ CREATE TABLE IF NOT EXISTS `url_lists` (
 // pub struct SqlUrl {
 //     id: u32,
 //     url: String,
-// }
-
-// #[derive(Debug, PartialEq, Eq)]
-// pub struct SqlKeywordList {
-//     collection_id: u32,
-//     keyword_id: u32,
-// }
-
-// #[derive(Debug, PartialEq, Eq)]
-// pub struct SqlUrlList {
-//     collection_id: u32,
-//     url_id: u32,
 // }
 
 #[allow(dead_code)]
@@ -309,6 +248,44 @@ impl SqlStigmarksDB {
         match conn.exec_map(
             r"SELECT id, user_id, creation_date, hidden_at, hidden_by FROM collections",
             {},
+            |(id, user_id, creation_date, hidden_at, hidden_by)| SqlCollection {
+                id,
+                user_id,
+                creation_date,
+                hidden_at,
+                hidden_by,
+            },
+        ) {
+            Ok(rows) => Ok(rows),
+            Err(err) => Err(format!("{}", err)),
+        }
+    }
+
+    // todo: -> Result<Vec<SqlCollection>, Error>
+    pub fn get_all_collections_from_user(
+        self: &Self,
+        user_id: u32,
+        _stigmer_id: u32,
+    ) -> Result<Vec<SqlCollection>, String> {
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_map(
+            "   SELECT      C.id,
+                            C.user_id,
+                            C.creation_date,
+                            C.hidden_at,
+                            C.hidden_by
+                FROM        collections C
+                LEFT JOIN   followers F
+                        ON  F.follower_id = :user_id
+                WHERE       (       C.user_id = :user_id
+                                OR  C.user_id = F.stigmer_id
+                            )
+                        AND C.hidden_at IS NULL;                
+            ",
+            params! {
+                "user_id" => user_id,
+                // "stigmer_id" => stigmer_id,
+            },
             |(id, user_id, creation_date, hidden_at, hidden_by)| SqlCollection {
                 id,
                 user_id,

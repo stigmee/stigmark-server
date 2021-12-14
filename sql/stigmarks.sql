@@ -17,10 +17,11 @@ CREATE TABLE IF NOT EXISTS `users` (
 );
 
 CREATE TABLE IF NOT EXISTS `followers` (
-    `user_id` int(11) NOT NULL,
+    `stigmer_id` int(11) NOT NULL,
     `follower_id` int(11) NOT NULL,
     `authorized_at` datetime DEFAULT NULL,
     `forbidden_at` datetime DEFAULT NULL,
+    UNIQUE KEY `stigmer_follower` (`stigmer_id`, `follower_id`)
 );
 
 CREATE TABLE IF NOT EXISTS `keywords` (

@@ -59,6 +59,7 @@ fn main() {
                 println!("stigmarks_db.init failed: {}", err);
                 return Err(rocket);
             }
+            println!("stigmarks db inited");
             Ok(rocket.manage(stigmarks_db))
         }))
         .mount("/", files::routes())

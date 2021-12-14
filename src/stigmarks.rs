@@ -27,7 +27,9 @@ use rocket::http::Status;
 use rocket::{Route, State};
 use rocket_contrib::json;
 use rocket_contrib::json::Json;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use stigmarks_sql_rs::sql::collections::NaiveDateTime;
+use stigmarks_sql_rs::sql::SqlStigmarksDB;
 
 #[derive(Deserialize)]
 struct StigmarkRequest {
@@ -47,8 +49,6 @@ struct StigmarkRequest {
 fn stigmarks_options() -> ServerResponse {
     ServerResponse::ok()
 }
-
-use stigmarks_sql_rs::sql::SqlStigmarksDB;
 
 // POST https://stigmark.stigmee.com/api/v1/stigmarks
 #[post("/stigmarks", format = "json", data = "<mark>", rank = 1)]
@@ -89,6 +89,74 @@ fn stigmarks_post(
     ServerResponse::json(json!({"collection_id": res.unwrap()}), Status::Created)
 }
 
+#[derive(Serialize)]
+struct StigmarkResponse {
+    collection_id: u32,
+    user_id: u32,
+    urls: Vec<String>,
+    keywords: Vec<String>,
+    creation_date: NaiveDateTime,
+}
+
+// GET https://stigmark.stigmee.com/api/v1/stigmarks
+#[get("/stigmarks?<from>", rank = 1)]
+fn stigmarks_get(
+    auth: JwtAuth,
+    state: State<SqlStigmarksDB>,
+    from: Option<u32>,
+) -> ServerResponse {
+    let mut user_id = 0u32;
+    if let Some(claims) = auth.claims {
+        user_id = claims.uid;
+    }
+    if user_id == 0 {
+        // println!("access denied");
+        // return ServerResponse::error("expected token", Status::Forbidden);
+        user_id = 2;
+    }
+    let mut stigmer_id = 0;
+    if let Some(from_user_id) = from {
+        stigmer_id = from_user_id;
+    }
+    let stigmarks_db = state.inner();
+    let user = stigmarks_db.get_user_by_id(user_id);
+    if let Err(err) = user {
+        println!("could not find user: {}", err);
+        return ServerResponse::error("user not found", Status::Forbidden);
+    }
+    let user = user.unwrap();
+    if let Some(disabled_at) = user.disabled_at {
+        println!("user {} disabled at {}", user_id, disabled_at);
+        return ServerResponse::error("user not found", Status::Forbidden);
+    }
+    // todo: check we are follower of this user
+    let res = stigmarks_db.get_all_collections_from_user(user_id, stigmer_id);
+    if let Err(err) = res {
+        eprintln!("add collection failed with: {}", err);
+        return ServerResponse::error(err, Status::InternalServerError);
+    }
+    let collections = res
+        .unwrap()
+        .iter()
+        .map(|c| {
+            let user_id = c.user_id;
+            let collection_id = c.id;
+            let creation_date = c.creation_date;
+            let urls = stigmarks_db.get_collection_urls_by_id(collection_id).unwrap();
+            let keywords = stigmarks_db.get_collection_keywords_by_id(collection_id).unwrap();
+
+            StigmarkResponse {
+                user_id,
+                collection_id,
+                urls,
+                keywords,
+                creation_date,
+            }
+        })
+        .collect::<Vec<_>>();
+    ServerResponse::json(json!(collections), Status::Ok)
+}
+
 pub fn routes() -> Vec<Route> {
-    routes![stigmarks_options, stigmarks_post]
+    routes![stigmarks_options, stigmarks_post, stigmarks_get]
 }
