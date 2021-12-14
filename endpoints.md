@@ -59,8 +59,13 @@ todo: add email verification
 | :-- | :-- |
 | POST | create collection |
 
-
 Request :
+
+| Parameter | Type | Format |
+| :-- | :-- | :-- |
+| urls | []String | JSON |
+| keywords | []String | JSON |
+
 ```
 {
     "urls": []String,
@@ -80,11 +85,10 @@ Response :
 | GET | enumerate collections |
 
 Request :
-```
-| Parameter | Type |
-| :-- | :-- |
-| from | Uint |
-```
+
+| Parameter | Type | Format |
+| :-- | :-- | :-- |
+| from | Uint | Query |
 
 Response :
 ```
