@@ -9,7 +9,7 @@
 | POST | create session |
 
 Request :
-```json
+```
 {
     "mail": String,
     "pass": String
@@ -17,7 +17,7 @@ Request :
 ```
 
 Response :
-```json
+```
 {
     "token": String
 }
