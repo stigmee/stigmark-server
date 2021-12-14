@@ -33,6 +33,22 @@ note: how to ban a user immediatly / revoke token ?
 | :-- | :-- |
 | POST | register user |
 
+Request :
+```
+{
+    "name": String,
+    "mail": String,
+    "pass": String
+}
+```
+
+Response :
+```
+{
+    "token": String
+}
+```
+
 todo: add email verification
 
 ## stigmarks
@@ -42,7 +58,46 @@ todo: add email verification
 | Method | Description |
 | :-- | :-- |
 | POST | create collection |
-| GET | enumerate collections <br/> - from=:user_id |
+
+
+Request :
+```
+{
+    "urls": []String,
+    "keywords": []String
+}
+```
+
+Response :
+```
+{
+    "collection_id": Uint
+}
+```
+
+| Method | Description |
+| :-- | :-- |
+| GET | enumerate collections |
+
+Request :
+```
+| Parameter | Type |
+| :-- | :-- |
+| from | Uint |
+```
+
+Response :
+```
+[
+    {
+        "id": Uint,
+        "user_id": Uint,
+        "creation_date": DateTime,
+        "urls": []String,
+        "keywords": []String,
+    }
+]
+```
 
 ### /api/v1/stigmarks/:collection_id
 
