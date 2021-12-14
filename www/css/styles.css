@@ -1,3 +1,9 @@
+@font-face {
+  font-family: "p22book";
+  src: url(/fonts/P22UndergroundCYBook.woff);
+  font-weight: normal;
+  font-style: normal;
+}
 * {
   padding: 0;
   margin: 0;
@@ -11,6 +17,7 @@
 html {
   background-color: #1c6f77;
   color: #fff;
+  font: 16px "p22book";
 }
 
 html, body {
@@ -19,6 +26,10 @@ html, body {
 
 .right {
   text-align: right;
+}
+
+.center {
+  text-align: center;
 }
 
 main {
@@ -44,6 +55,7 @@ main form div + div {
 }
 main form input {
   background-color: #fff;
+  color: #000;
   width: 100%;
   padding: 5px;
 }
@@ -55,7 +67,8 @@ main form input[type=submit] {
   text-transform: uppercase;
 }
 main form input[type=submit]:hover {
-  background-color: #1c6f77;
+  background-color: #eacc78;
+  color: #000;
 }
 
 /*# sourceMappingURL=styles.css.map */
