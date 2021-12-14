@@ -48,10 +48,6 @@ impl SqlStigmarksDB {
         if let Err(err) = conn.query_iter(init_str) {
             return Err(format!("{}", err));
         }
-
-        if let Ok(user_id) = self.add_user("Philippe Anel", "zexigh@gmail.com", vec![]) {
-            println!("user {} added", user_id);
-        }
         Ok(())
     }
 }

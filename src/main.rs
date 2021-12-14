@@ -30,16 +30,20 @@ use cors::CORS;
 
 // stigmark stuff
 mod stigmarks;
+mod token;
 mod login;
+mod signup;
 mod files;
 mod response;
 mod basicauth;
+mod jwtauth;
 mod cors;
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
 
 fn main() {
     let mut api_routes = stigmarks::routes();
     api_routes.append(&mut login::routes());
+    api_routes.append(&mut signup::routes());
 
     rocket::ignite()
         .attach(CORS)
@@ -55,6 +59,7 @@ fn main() {
                 println!("stigmarks_db.init failed: {}", err);
                 return Err(rocket);
             }
+            println!("stigmarks db inited");
             Ok(rocket.manage(stigmarks_db))
         }))
         .mount("/", files::routes())

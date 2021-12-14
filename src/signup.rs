@@ -27,60 +27,51 @@ use rocket_contrib::json::Json;
 use rocket::{State, Route};
 use rocket_contrib::json;
 use crate::response::ServerResponse;
-use crate::token::create_token;
-use stigmarks_sql_rs::sql::SqlStigmarksDB;
+use crate::token::{create_token};
+use stigmarks_sql_rs::sql::{SqlStigmarksDB, users::Role};
 
 #[derive(Deserialize)]
-struct LoginRequest {
+struct SignupRequest {
+    user: String,
     mail: String,
     pass: String,
 }
 
 #[derive(Serialize)]
-struct LoginResult {
+struct SignupResult {
     token: String,
 }
 
 #[allow(dead_code)]
-impl LoginResult {
+impl SignupResult {
     fn new<S: Into<String>>(token: S) -> Self {
-        LoginResult {
+        SignupResult {
             token: token.into(),
         }
     }
 }
 
-#[options("/login")]
-fn login_options() ->ServerResponse {
+#[options("/signup")]
+fn signup_options() ->ServerResponse {
     ServerResponse::ok()
 }
 
-use std::str;
-
-#[post("/login", format = "json", data = "<req>")]
-fn login_post(state: State<SqlStigmarksDB>, req: Json<LoginRequest>) -> ServerResponse {
-    println!("login: user '{}' pass '{}'", &req.mail, &req.pass);
-    if req.mail == "" || req.pass == "" {
-        eprintln!("login: invalid parameters");
-        return ServerResponse::error("invalid parameters", Status::BadRequest);
-    }
+#[post("/signup", format = "json", data = "<req>")]
+fn signup_post(state: State<SqlStigmarksDB>, req: Json<SignupRequest>) -> ServerResponse {
+    println!("signup: user '{}' pass '{}'", &req.mail, &req.pass);
+    let passwd = &req.pass;
+    let hash = bcrypt::hash(passwd, 6).unwrap();
     let stigmarks_db = state.inner();
-    let res = stigmarks_db.get_user_by_email(&req.mail);
+    let res = stigmarks_db.add_user(&req.user, &req.mail, Role::User, hash.as_str().as_bytes().to_vec());
     if let Err(err) = res { 	
-        eprintln!("get user {} failed with: {}", &req.mail, err);
-        return ServerResponse::error("user not found", Status::Unauthorized);
+        eprintln!("add user failed with: {}", err);
+        return ServerResponse::error(err, Status::InternalServerError);
     }
-    // todo: remove unwraps
-    let user = res.unwrap();
-    if !bcrypt::verify(&req.pass, str::from_utf8(&user.hash).unwrap()).unwrap() {
-        eprintln!("get user '{}' failed: invalid user/pass combination", &req.mail);
-        return ServerResponse::error("invalid user/pass combination", Status::Unauthorized);
-    }
-    let token = create_token(user.id).unwrap();
-    let json = json!(LoginResult::new(token));
+    let token = create_token(res.unwrap()).unwrap();
+    let json = json!(SignupResult::new(token));
     ServerResponse::json(json, Status::Created)
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![login_options, login_post]
+    routes![signup_options, signup_post]
 }

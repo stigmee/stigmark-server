@@ -27,7 +27,7 @@ use rocket::Route;
 use crate::response::ServerResponse;
 use crate::basicauth::BasicAuth;
 
-// GET https://stigmark.badro.com/
+// GET https://stigmark.stigmee.com/
 #[get("/", rank = 2)]
 fn files_slash(auth: BasicAuth) -> ServerResponse {
     println!("stigmarks: '{}' GET /", auth.name);
@@ -38,7 +38,7 @@ fn files_slash(auth: BasicAuth) -> ServerResponse {
     ServerResponse::file(&path)
 }
 
-// GET https://stigmark.badro.com/*
+// GET https://stigmark.stigmee.com/*
 #[get("/<file..>", rank = 3)]
 fn files_others(auth: BasicAuth, file: PathBuf) -> ServerResponse {
     println!("stigmarks: '{}' GET {:?}", auth.name, file);

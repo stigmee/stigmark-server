@@ -1,0 +1,161 @@
+* {
+    margin: 0;
+    padding: 0;
+    outline: none;
+    border: 0;
+    font-size: 14px;
+    font-family: Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
+}
+
+html {
+    background-image: url(../images/background.png);
+    background-repeat: no-repeat;
+    background-size: cover;
+    color: #fff;
+    padding: 5px;
+    min-width: 400px;
+    max-height: 400px;
+}
+
+header {
+    padding: 5px 0;
+}
+
+footer {
+    padding-top: 5px;
+}
+
+h1 {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+}
+
+h2 {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: inline-block;
+}
+
+h3 {
+    font-size: 10px;
+    font-weight: normal;
+    text-align: center;
+}
+
+nav {
+    padding: 5px 0 0;
+    border-bottom: 1px solid #099;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+section>div {
+    padding-bottom: 5px;
+}
+
+a {
+    color: rgb(233, 248, 21);
+}
+
+main {
+    padding: 5px 10px 0;
+}
+
+button {
+    background-color: #055;
+    color: #fff;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+button + button {
+    margin-left: 3px;
+}
+
+button:hover {
+    background-color: #099;
+}
+
+button.selected {
+    background-color: #059;
+}
+
+button.selected:hover {
+    background-color: #09c;
+}
+
+button.disabled {
+    background-color: #444;
+    color: #ccc;
+    cursor: no-drop;
+}
+
+input,
+textarea {
+    display: block;
+    padding: 5px 3px;
+    width: 100%;
+}
+
+textarea {
+    resize: none;
+    background-color: #eee;
+    width: 100%;
+}
+
+ul {
+    list-style-type: none;
+}
+
+li {
+    position: relative;
+}
+
+input[type='checkbox'] {
+    width: auto;
+    display: inline;
+}
+
+input+span {
+    padding-left: 5px;
+}
+
+em {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    text-overflow: ellipsis;
+    background-color: #fff;
+    overflow-x: hidden;
+}
+
+.hidden {
+    display: none;
+}
+
+.right {
+    text-align: right;
+}
+
+.center {
+    text-align: center;
+}
+
+#message-box {
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+    text-align: center;
+}
+
+#message-box.alert {
+    color: #c00;
+}
+
+#message-box.info {
+    color: #0c0;
+}
