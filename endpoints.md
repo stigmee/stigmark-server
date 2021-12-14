@@ -4,9 +4,9 @@
 
 ### /api/v1/login
 
-| Method | Description |
-| :-- | :-- |
-| POST | create session |
+| Method | Description | Request | Response |
+| :-- | :-- | :-- | :-- |
+| POST | create session | { <br> mail: String, <br> pass: String, <br> } | { <br> token: String, <br> } |
 
 note: how to ban a user immediatly / revoke token ?
 
