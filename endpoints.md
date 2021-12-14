@@ -4,9 +4,24 @@
 
 ### /api/v1/login
 
-| Method | Description | Request | Response |
-| :-- | :-- | :-- | :-- |
-| POST | create session | { <br> mail: String, <br> pass: String, <br> } | { <br> token: String, <br> } |
+| Method | Description |
+| :-- | :-- |
+| POST | create session |
+
+Request :
+```json
+{
+    "mail": String,
+    "pass": String
+}
+```
+
+Response :
+```json
+{
+    "token": String
+}
+```
 
 note: how to ban a user immediatly / revoke token ?
 
