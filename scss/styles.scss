@@ -34,9 +34,9 @@ html, body {
 }
 
 main {
-    margin: 50px auto;
-    padding: 10px;
-    width: 500px;
+    margin: 5px auto;
+    padding: 0 10px;
+    max-width: 600px;
 
     h1 {
         text-align: center;
@@ -80,7 +80,12 @@ main {
     }
 }
 
-button {
+section {
+    margin-top: 5px;
+}
+
+nav a, button {
+    text-decoration: none;
     background-color: #165356;
     color: #ccc;
     width: auto;
@@ -92,11 +97,50 @@ button {
         background-color: #eacc78;
         color: #000;
     }
+
+    &.current {
+        background-color: #185a7a;
+        pointer-events: none;
+    }
 }
 
-section table {
-    width: 100%;
-    td {
-        vertical-align: top;
+header {
+    display: grid;
+    grid-template-columns: min-content 1fr;
+    padding: 2px 5px;
+    background-color: #0e3951;
+
+    div {
+        padding: 5px 0;
+    }
+
+    nav {
+        text-align: right;
+
+        a {
+            display: inline-block;
+        }
+    }
+}
+
+section {
+    padding: 0 10px;
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid #eacc78;
+
+        td {
+            vertical-align: top;
+            padding: 5px;
+        }
+
+        td+td {
+            border-left: 1px solid #eacc78;
+        }
+
+        tr+tr {
+            border-top: 1px solid #eacc78;
+        }
     }
 }

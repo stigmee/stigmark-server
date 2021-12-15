@@ -90,9 +90,10 @@ fn stigmarks_post(
 }
 
 #[derive(Serialize)]
-struct StigmarkResponse {
+struct StigmarkResponsePublic {
     collection_id: u32,
     user_id: u32,
+    user_name: String,
     urls: Vec<String>,
     keywords: Vec<String>,
     creation_date: NaiveDateTime,
@@ -129,6 +130,7 @@ fn stigmarks_get(
         return ServerResponse::error("user not found", Status::Forbidden);
     }
     // todo: check we are follower of this user
+    println!("get_all_collection: user_id={} stigmer_id={}", user_id, stigmer_id);
     let res = stigmarks_db.get_all_collections_from_user(user_id, stigmer_id);
     if let Err(err) = res {
         eprintln!("add collection failed with: {}", err);
@@ -139,17 +141,19 @@ fn stigmarks_get(
         .iter()
         .map(|c| {
             let user_id = c.user_id;
+            let user_name = c.user_name.clone();
             let collection_id = c.id;
             let creation_date = c.creation_date;
             let urls = stigmarks_db.get_collection_urls_by_id(collection_id).unwrap();
             let keywords = stigmarks_db.get_collection_keywords_by_id(collection_id).unwrap();
 
-            StigmarkResponse {
+            StigmarkResponsePublic {
                 user_id,
+                user_name,
                 collection_id,
+                creation_date,
                 urls,
                 keywords,
-                creation_date,
             }
         })
         .collect::<Vec<_>>();

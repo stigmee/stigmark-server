@@ -11,26 +11,15 @@ function makeLink(value) {
 }
 
 window.addEventListener('load', evt => {
-    // const token = getQueryParams('token', window.location.href);
-    // if (token === null) {
-    //     alert('token not found');
-    //     return;
-    // }
-
     const sectionEl = document.querySelector('section');
     if (!sectionEl) {
         alert('could not find <section>');
         return;
     }
 
-    const buttonEl = document.querySelector('button');
-    if (!buttonEl) {
-        alert('could not find <button>');
-        return;
-    }
-    buttonEl.addEventListener('click', evt => {
-        buttonEl.disabled = true;
+    update_collection();
 
+    function update_collection() {
         const headers = new Headers();
         // headers.append('Authorization', `Bearer ${token}`);
         headers.append('Content-Type', 'application/json');
@@ -42,7 +31,6 @@ window.addEventListener('load', evt => {
             });
         request
             .then(response => {
-                buttonEl.disabled = false;
                 if (response.status != 200) {
                     alert("failed to enum collections");
                     return;
@@ -59,14 +47,15 @@ window.addEventListener('load', evt => {
 
                             const rowEl = document.createElement('tr');
                             tableEl.appendChild(rowEl);
+                            rowEl.dataset['collection'] = collection.collection_id;
 
-                            const cellIdEl = document.createElement('td');
-                            rowEl.appendChild(cellIdEl);
-                            cellIdEl.innerHTML = `collection ${collection.collection_id}`;
+                            const cellUserNameEl = document.createElement('td');
+                            rowEl.appendChild(cellUserNameEl);
+                            cellUserNameEl.innerHTML = collection.user_name;
 
-                            const cellUserIdEl = document.createElement('td');
-                            rowEl.appendChild(cellUserIdEl);
-                            cellUserIdEl.innerHTML = `shared by ${collection.user_id}`;
+                            const cellDateEl = document.createElement('td');
+                            rowEl.appendChild(cellDateEl);
+                            cellDateEl.innerHTML = collection.creation_date.split('T')[0];
 
                             const cellUrlsIdEl = document.createElement('td');
                             rowEl.appendChild(cellUrlsIdEl);
@@ -84,9 +73,8 @@ window.addEventListener('load', evt => {
                     });
             })
             .catch(err => {
-                buttonEl.disabled = false;
                 alert("login failed");
                 return;
             });
-    });
+    }
 });

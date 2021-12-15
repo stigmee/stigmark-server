@@ -36,6 +36,14 @@ pub struct SqlCollection {
     pub hidden_at: Option<u32>,
 }
 
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct SqlCollectionPublic {
+    pub id: u32,
+    pub user_id: u32,
+    pub user_name: String,
+    pub creation_date: NaiveDateTime,
+}
+
 // #[derive(Debug, PartialEq, Eq)]
 // pub struct SqlKeyword {
 //     id: u32,
@@ -266,32 +274,31 @@ impl SqlStigmarksDB {
         self: &Self,
         user_id: u32,
         _stigmer_id: u32,
-    ) -> Result<Vec<SqlCollection>, String> {
+    ) -> Result<Vec<SqlCollectionPublic>, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_map(
             "   SELECT      C.id,
                             C.user_id,
-                            C.creation_date,
-                            C.hidden_at,
-                            C.hidden_by
-                FROM        collections C
+                            U.name,
+                            C.creation_date
+                FROM        collections C,
+                            users U
                 LEFT JOIN   followers F
                         ON  F.follower_id = :user_id
                 WHERE       (       C.user_id = :user_id
                                 OR  C.user_id = F.stigmer_id
                             )
-                        AND C.hidden_at IS NULL;                
+                        AND C.hidden_at IS NULL
+                        AND U.id = C.user_id
             ",
             params! {
                 "user_id" => user_id,
-                // "stigmer_id" => stigmer_id,
             },
-            |(id, user_id, creation_date, hidden_at, hidden_by)| SqlCollection {
+            |(id, user_id, user_name, creation_date)| SqlCollectionPublic {
                 id,
                 user_id,
+                user_name,
                 creation_date,
-                hidden_at,
-                hidden_by,
             },
         ) {
             Ok(rows) => Ok(rows),
