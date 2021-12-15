@@ -110,9 +110,8 @@ fn stigmarks_get(
         user_id = claims.uid;
     }
     if user_id == 0 {
-        // println!("access denied");
-        // return ServerResponse::error("expected token", Status::Forbidden);
-        user_id = 2;
+        println!("access denied");
+        return ServerResponse::error("expected token", Status::Forbidden);
     }
     let mut stigmer_id = 0;
     if let Some(from_user_id) = from {

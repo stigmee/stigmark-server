@@ -79,3 +79,24 @@ main {
         }
     }
 }
+
+button {
+    background-color: #165356;
+    color: #ccc;
+    width: auto;
+    cursor: pointer;
+    text-transform: uppercase;
+    padding: 5px;
+
+    &:hover {
+        background-color: #eacc78;
+        color: #000;
+    }
+}
+
+section table {
+    width: 100%;
+    td {
+        vertical-align: top;
+    }
+}

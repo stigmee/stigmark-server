@@ -40,14 +40,18 @@ impl JwtAuth {
             eprintln!("Jwt error: {}", err);
             return None;
         }
-        Some(Self { claims: Some(claims.unwrap()) })
+        let claims = claims.unwrap();
+        println!("jwt-auth: claims={:?}", claims);
+        Some(Self {
+            claims: Some(claims),
+        })
     }
 }
 
 #[derive(Debug)]
 pub enum LoginError {
     InvalidToken,
-    NotImplemented,
+    // NotImplemented,
     BadCount,
 }
 
@@ -62,34 +66,52 @@ fn value<'s>(req: &'s Request, key: &str) -> &'s RawStr {
 impl<'a, 'r> FromRequest<'a, 'r> for JwtAuth {
     type Error = LoginError;
     fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
+        println!("from_request");
+
+        let mut token = "";
+
         // can be provided through cookie
         let cookies = request.cookies();
         if let Some(cookie) = cookies.get("stigmark") {
-            println!("cookie: {:?}", cookie);
-            return Outcome::Failure((Status::BadRequest, LoginError::NotImplemented));
+            token = cookie.value();
+            println!("got token by cookie: {}", token);
         }
 
-        // can be provided through query : https://domain.ltd/?token=xxxx
-        let token = value(request, "token").as_str();
-        if token != "" {
-            println!("token[query]: {:?}", token);
-            return Outcome::Failure((Status::BadRequest, LoginError::NotImplemented));
-        }
-
-        // can be provided through header
+        // can be provided through header "Authorization: Bearer xxxx"
         let keys: Vec<&str> = request.headers().get("Authorization").collect();
         match keys.len() {
-            0 => Outcome::Success(JwtAuth { claims: None }),
+            0 => { /* fall through */ }
             1 => {
                 let key = keys[0];
                 if key.len() > 7 && &key[..7] == "Bearer " {
-                    if let Some(auth_info) = JwtAuth::new(&key[7..]) {
-                        return Outcome::Success(auth_info);
-                    }
+                    token = &key[..7];
+                    println!("got token by header: {}", token);
                 }
-                Outcome::Failure((Status::BadRequest, LoginError::InvalidToken))
             }
-            _ => Outcome::Failure((Status::BadRequest, LoginError::BadCount)),
+            _ => {
+                println!("too many headers found");
+                return Outcome::Failure((Status::BadRequest, LoginError::BadCount));
+            }
         }
+
+        if token == "" {
+            println!("no token found");
+            return Outcome::Success(JwtAuth { claims: None });
+        }
+
+        // can be provided through query : https://stigmark.stigmee.fr/?token=xxxx
+        let token_by_query = value(request, "token").as_str();
+        if token_by_query != "" {
+            token = token_by_query;
+            println!("got token by query: {}", token);
+        }
+
+        if let Some(auth_info) = JwtAuth::new(token) {
+            println!("token is valid");
+            return Outcome::Success(auth_info);
+        }
+
+        println!("could not get token_info");
+        return Outcome::Failure((Status::BadRequest, LoginError::InvalidToken));
     }
 }

@@ -71,4 +71,24 @@ main form input[type=submit]:hover {
   color: #000;
 }
 
+button {
+  background-color: #165356;
+  color: #ccc;
+  width: auto;
+  cursor: pointer;
+  text-transform: uppercase;
+  padding: 5px;
+}
+button:hover {
+  background-color: #eacc78;
+  color: #000;
+}
+
+section table {
+  width: 100%;
+}
+section table td {
+  vertical-align: top;
+}
+
 /*# sourceMappingURL=styles.css.map */
