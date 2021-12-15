@@ -84,7 +84,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for JwtAuth {
             1 => {
                 let key = keys[0];
                 if key.len() > 7 && &key[..7] == "Bearer " {
-                    token = &key[..7];
+                    token = &key[7..];
                     println!("got token by header: {}", token);
                 }
             }
