@@ -26,63 +26,52 @@ use crate::response::ServerResponse;
 use rocket::http::Status;
 use rocket::{Route, State};
 use rocket_contrib::json;
-use rocket_contrib::json::Json;
-use serde::Deserialize;
-
-#[derive(Deserialize)]
-struct FollowRequest {
-    urls: Vec<String>,
-    keys: Vec<String>,
-    token: Option<String>,
-}
 
 // OPTIONS https://stigmark.stigmee.com/api/v1/followers
 #[options("/followers", rank = 1)]
-fn follow_options() -> ServerResponse {
+fn followers_options() -> ServerResponse {
     ServerResponse::ok()
 }
 
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
 
-// POST https://stigmark.stigmee.com/api/v1/followers
-#[post("/followers", format = "json", data = "<mark>", rank = 1)]
-fn follow_post(
+// GET https://stigmark.stigmee.com/api/v1/followers
+#[get("/followers", rank = 1)]
+fn followers_get(
     auth: JwtAuth,
     state: State<SqlStigmarksDB>,
-    mark: Json<StigmarkRequest>,
 ) -> ServerResponse {
+    println!("followers_get");
     let mut user_id = 0u32;
     if let Some(claims) = auth.claims {
         user_id = claims.uid;
-    }
-    // We might need token from body
-    if user_id > 0 {
-        if let Some(token) = &mark.token {
-            if let Some(auth) = JwtAuth::new(token) {
-                if let Some(claims) = auth.claims {
-                    user_id = claims.uid;
-                }
-            }
-        }
     }
     if user_id == 0 {
         println!("access denied");
         return ServerResponse::error("expected token", Status::Forbidden);
     }
     let stigmarks_db = state.inner();
-    if let Err(err) = stigmarks_db.get_user_by_id(user_id) {
+    let user = stigmarks_db.get_user_by_id(user_id);
+    if let Err(err) = user {
         println!("could not find user: {}", err);
         return ServerResponse::error("user not found", Status::Forbidden);
     }
-    // todo: check if user is still active
-    let res = stigmarks_db.add_collection(user_id, &mark.keys, &mark.urls);
+    let user = user.unwrap();
+    if let Some(disabled_at) = user.disabled_at {
+        println!("user {} disabled at {}", user_id, disabled_at);
+        return ServerResponse::error("user not found", Status::Forbidden);
+    }
+    // todo: check we are follower of this user
+    println!("get_user_followers: user_id={}", user_id);
+    let res = stigmarks_db.get_user_followers(user_id);
     if let Err(err) = res {
-        eprintln!("add collection failed with: {}", err);
+        eprintln!("get_user_followers failed with: {}", err);
         return ServerResponse::error(err, Status::InternalServerError);
     }
-    ServerResponse::json(json!({"collection_id": res.unwrap()}), Status::Created)
+    let subscriptions = res.unwrap();
+    ServerResponse::json(json!(subscriptions), Status::Ok)
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![follow_options, follow_post]
+    routes![followers_options, followers_get]
 }

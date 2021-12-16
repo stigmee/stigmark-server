@@ -286,7 +286,11 @@ impl SqlStigmarksDB {
                 LEFT JOIN   followers F
                         ON  F.follower_id = :user_id
                 WHERE       (       C.user_id = :user_id
-                                OR  C.user_id = F.stigmer_id
+                                OR  (
+                                    C.user_id = F.stigmer_id
+                                AND F.authorized_at IS NOT NULL
+                                AND F.forbidden_at IS NULL )
+        
                             )
                         AND C.hidden_at IS NULL
                         AND U.id = C.user_id

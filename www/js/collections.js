@@ -17,9 +17,9 @@ window.addEventListener('load', evt => {
         return;
     }
 
-    update_collection();
+    update_collections();
 
-    function update_collection() {
+    function update_collections() {
         const headers = new Headers();
         // headers.append('Authorization', `Bearer ${token}`);
         headers.append('Content-Type', 'application/json');

@@ -55,6 +55,20 @@ pub struct SqlUser {
     pub creation_date: NaiveDateTime,
     pub disabled_at: Option<mysql::chrono::NaiveDateTime>,
     pub disabled_by: Option<u32>,
+    pub is_private: bool,
+    pub is_anonymous: bool,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct SqlSubscription {
+    pub stigmer_id: u32,
+    pub stigmer_name: String,
+    pub stigmer_mail: String,
+    pub follower_id: u32,
+    pub follower_name: String,
+    pub follower_mail: String,
+    pub authorized_at: Option<NaiveDateTime>,
+    pub forbidden_at: Option<NaiveDateTime>,
 }
 
 #[allow(dead_code)]
@@ -86,7 +100,7 @@ impl SqlStigmarksDB {
     pub fn get_user_by_id(self: &Self, user_id: u32) -> Result<SqlUser, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_first(
-            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by FROM users where id=:id",
+            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by, is_private, is_anonymous FROM users where id=:id",
             params! {
                 "id" => user_id,
             },
@@ -96,7 +110,7 @@ impl SqlStigmarksDB {
         }
         let row = res.unwrap();
         let res = row.map(
-            |(id, name, email, hash, creation_date, disabled_at, disabled_by)| SqlUser {
+            |(id, name, email, hash, creation_date, disabled_at, disabled_by, is_private, is_anonymous)| SqlUser {
                 id,
                 name,
                 email,
@@ -104,6 +118,8 @@ impl SqlStigmarksDB {
                 creation_date,
                 disabled_at,
                 disabled_by,
+                is_private,
+                is_anonymous,
             },
         );
         if let None = res {
@@ -116,9 +132,9 @@ impl SqlStigmarksDB {
     pub fn get_all_users(self: &Self) -> Result<Vec<SqlUser>, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_map(
-            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by FROM users",
+            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by, is_private, is_anonymous FROM users",
             {},
-            |(id, name, email, hash, creation_date, disabled_at, disabled_by)| SqlUser {
+            |(id, name, email, hash, creation_date, disabled_at, disabled_by, is_private, is_anonymous)| SqlUser {
                 id,
                 name,
                 email,
@@ -126,6 +142,8 @@ impl SqlStigmarksDB {
                 creation_date,
                 disabled_at,
                 disabled_by,
+                is_private,
+                is_anonymous,
             },
         );
         if let Err(err) = res {
@@ -138,7 +156,7 @@ impl SqlStigmarksDB {
     pub fn get_user_by_email(self: &Self, user_email: &String) -> Result<SqlUser, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_first(
-            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by FROM users where email=:email",
+            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by, is_private, is_anonymous FROM users where email=:email",
             params! {
                 "email" => user_email
             },
@@ -147,7 +165,7 @@ impl SqlStigmarksDB {
             return Err(format!("get_user_by_auth failed: {}", err));
         }
         let row = res.unwrap();
-        let res = row.map(|(id, name, email, hash, creation_date, disabled_at, disabled_by)| SqlUser {
+        let res = row.map(|(id, name, email, hash, creation_date, disabled_at, disabled_by, is_private, is_anonymous)| SqlUser {
             id,
             name,
             email,
@@ -155,6 +173,8 @@ impl SqlStigmarksDB {
             creation_date,
             disabled_at,
             disabled_by,
+            is_private,
+            is_anonymous,
         });
         if let None = res {
             return Err(format!("user '{}' not found", user_email));
@@ -163,16 +183,16 @@ impl SqlStigmarksDB {
     }
 
     // todo: -> Result<u32, Error>
-    pub fn add_user_subscription(self: &Self, user_id: u32, follower_id: u32, authorize: bool) -> Result<u32, String> {
+    pub fn add_user_subscription(self: &Self, stigmer_id: u32, follower_id: u32, authorize: bool) -> Result<u32, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
-        let mut req = r"INSERT INTO followers (user_id, follower_id) VALUES (:user_id, :follower_id)";
+        let mut req = r"INSERT INTO followers (stigmer_id, follower_id) VALUES (:stigmer_id, :follower_id)";
         if authorize {
-            req = r"INSERT INTO followers (user_id, follower_id, authorized_at) VALUES (:user_id, :follower_id, NOW())"
+            req = r"INSERT INTO followers (stigmer_id, follower_id, authorized_at) VALUES (:stigmer_id, :follower_id, NOW())"
         }
         let res = conn.exec_drop(
             req,
             params! {
-                "user_id" => user_id,
+                "stigmer_id" => stigmer_id,
                 "follower_id" => follower_id,
             },
         );
@@ -182,23 +202,39 @@ impl SqlStigmarksDB {
         Ok(conn.last_insert_id() as u32)
     }
 
-    // todo: -> Result<Vec<SqlUser>, Error>
-    pub fn get_user_followers(self: &Self, user_id: u32) -> Result<Vec<SqlUser>, String> {
+    // todo: -> Result<Vec<SqlSubscription>, Error>
+    pub fn get_user_followers(self: &Self, stigmer_id: u32) -> Result<Vec<SqlSubscription>, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
-        let req = r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by FROM users U, followers F WHERE F.user_id=:user_id AND U.id=F.follower_id";
         let res = conn.exec_map(
-            req,
+            r"  SELECT      U1.id as stigmer_id,
+                            U1.name as stigmer_name,
+                            U1.email as stigmer_mail,
+                            U2.id as follower_id,
+                            U2.name as follower_name,
+                            U2.email as follower_mail,
+                            F.authorized_at,
+                            F.forbidden_at
+                FROM        followers F,
+                            users U1,
+                            users U2
+                WHERE       F.stigmer_id = :stigmer_id
+                        AND	 U1.id = :stigmer_id
+                        AND	 U2.id = F.follower_id
+                        AND	 U1.disabled_at IS NULL
+                        AND	 U2.disabled_at IS NULL
+            ",
             params! {
-                "user_id" => user_id,
+                "stigmer_id" => stigmer_id,
             },
-            |(id, name, email, hash, creation_date, disabled_at, disabled_by)| SqlUser {
-                id,
-                name,
-                email,
-                hash,
-                creation_date,
-                disabled_at,
-                disabled_by,
+            |(stigmer_id, stigmer_name, stigmer_mail, follower_id, follower_name, follower_mail, authorized_at, forbidden_at)| SqlSubscription {
+                stigmer_id,
+                stigmer_name,
+                stigmer_mail,
+                follower_id,
+                follower_name,
+                follower_mail,
+                authorized_at,
+                forbidden_at,
             },
         );
         if let Err(err) = res {
@@ -207,22 +243,39 @@ impl SqlStigmarksDB {
         Ok(res.unwrap())
     }
 
-    // todo: -> Result<Vec<SqlUser>, Error>
-    pub fn get_user_subscriptions(self: &Self, follower_id: u32) -> Result<Vec<SqlUser>, String> {
+    // todo: -> Result<Vec<SqlSubscription>, Error>
+    pub fn get_user_subscriptions(self: &Self, follower_id: u32) -> Result<Vec<SqlSubscription>, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_map(
-            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by FROM users U, followers F WHERE F.follower_id=:follower_id AND U.id=F.user_id",
+            r"  SELECT      U1.id as stigmer_id,
+                            U1.name as stigmer_name,
+                            U1.email as stigmer_mail,
+                            U2.id as follower_id,
+                            U2.name as follower_name,
+                            U2.email as follower_mail,
+                            F.authorized_at,
+                            F.forbidden_at
+                FROM        followers F,
+                            users U1,
+                            users U2
+                WHERE       F.follower_id = :follower_id
+                        AND	 U2.id = :follower_id
+                        AND	 U1.id = F.stigmer_id
+                        AND	 U1.disabled_at IS NULL
+                        AND	 U2.disabled_at IS NULL
+            ",
             params! {
                 "follower_id" => follower_id,
             },
-            |(id, name, email, hash, creation_date, disabled_at, disabled_by)| SqlUser {
-                id,
-                name,
-                email,
-                hash,
-                creation_date,
-                disabled_at,
-                disabled_by,
+            |(stigmer_id, stigmer_name, stigmer_mail, follower_id, follower_name, follower_mail, authorized_at, forbidden_at)| SqlSubscription {
+                stigmer_id,
+                stigmer_name,
+                stigmer_mail,
+                follower_id,
+                follower_name,
+                follower_mail,
+                authorized_at,
+                forbidden_at,
             },
         );
         if let Err(err) = res {

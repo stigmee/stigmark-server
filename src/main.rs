@@ -33,6 +33,8 @@ mod stigmarks;
 mod token;
 mod login;
 mod signup;
+mod stigmers;
+mod followers;
 mod files;
 mod response;
 mod basicauth;
@@ -44,6 +46,8 @@ fn main() {
     let mut api_routes = stigmarks::routes();
     api_routes.append(&mut login::routes());
     api_routes.append(&mut signup::routes());
+    api_routes.append(&mut stigmers::routes());
+    api_routes.append(&mut followers::routes());
 
     rocket::ignite()
         .attach(CORS)

@@ -18,3 +18,4 @@
 [ ] extension:  add config page
 [ ] extension:  link to bookmarks
 [ ] front:      add admin page
+[ ] front/back: add notification when subscription required/added
