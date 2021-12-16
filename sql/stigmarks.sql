@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `role` int(11) NOT NULL,
     `hash` varchar(128) NOT NULL,
     `creation_date` datetime NOT NULL DEFAULT NOW(),
+    `validated_at` datetime DEFAULT NULL,
     `disabled_at` datetime DEFAULT NULL,
     `disabled_by` int(11) DEFAULT NULL,
     `is_private` int(1) NOT NULL DEFAULT 0,

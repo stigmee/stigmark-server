@@ -102,6 +102,12 @@ nav a, button {
         background-color: #185a7a;
         pointer-events: none;
     }
+
+    &.disabled {
+        background-color: #aaa;
+        background-color: #444;
+        cursor: no-drop;
+    }
 }
 
 header {

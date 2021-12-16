@@ -92,6 +92,11 @@ nav a.current, button.current {
   background-color: #185a7a;
   pointer-events: none;
 }
+nav a.disabled, button.disabled {
+  background-color: #aaa;
+  background-color: #444;
+  cursor: no-drop;
+}
 
 header {
   display: grid;

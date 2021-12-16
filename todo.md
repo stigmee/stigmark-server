@@ -1,14 +1,14 @@
+[ ] back/front: handle user validation
 [X] back:       document api
 [ ] back:       do not insert empty keywords / urls
-[ ] back:       add user management
 [X] back:   	add cookie support
 [ ] back:       hide password on logs
-[ ] back:       allow private users
+[X] back:       allow private users
 [ ] back:       finish follow table
-[ ] back:       add follow api
-[ ] front:      add follow page
-[ ] front:      add collection page
-[ ] back:       add collection api
+[X] back:       add follow api
+[X] front:      add follow page
+[X] front:      add collection page
+[X] back:       add collection api
 [ ] back:       add search api
 [ ] front:      add search page
 [ ] front:      update login page -> redirect to collection/followers
@@ -18,4 +18,5 @@
 [ ] extension:  add config page
 [ ] extension:  link to bookmarks
 [ ] front:      add admin page
+[ ] back:       add user management (admin)
 [ ] front/back: add notification when subscription required/added
