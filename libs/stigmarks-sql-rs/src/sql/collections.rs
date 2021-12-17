@@ -30,8 +30,8 @@ use serde::Serialize;
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct SqlCollection {
     pub id: u32,
-    pub user_id: u32,
-    pub creation_date: NaiveDateTime,
+    pub created_by: u32,
+    pub created_at: NaiveDateTime,
     pub hidden_by: Option<NaiveDateTime>,
     pub hidden_at: Option<u32>,
 }
@@ -39,9 +39,9 @@ pub struct SqlCollection {
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct SqlCollectionPublic {
     pub id: u32,
-    pub user_id: u32,
+    pub created_by: u32,
     pub user_name: String,
-    pub creation_date: NaiveDateTime,
+    pub created_at: NaiveDateTime,
 }
 
 // #[derive(Debug, PartialEq, Eq)]
@@ -175,16 +175,16 @@ impl SqlStigmarksDB {
     // todo: -> Result<u32, Error>
     pub fn add_collection(
         self: &Self,
-        user_id: u32,
+        created_by: u32,
         keywords: &Vec<String>,
         urls: &Vec<String>,
     ) -> Result<u32, String> {
         // create collection
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_drop(
-            r"INSERT INTO collections (user_id) VALUES (:user_id)",
+            r"INSERT INTO collections (created_by) VALUES (:created_by)",
             params! {
-                    "user_id" => user_id,
+                    "created_by" => created_by,
             },
         ) {
             Ok(_) => {
@@ -229,16 +229,16 @@ impl SqlStigmarksDB {
     pub fn get_collection_by_id(self: &Self, collection_id: u32) -> Result<SqlCollection, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_first(
-            r"SELECT id, user_id, creation_date, hidden_at, hidden_by FROM collections where id=:id",
+            r"SELECT id, created_by, created_at, hidden_at, hidden_by FROM collections where id=:id",
             params! {
                 "id" => collection_id,
             },
         ) {
             Ok(row) => {
-                match row.map(|(id, user_id, creation_date, hidden_at, hidden_by)| SqlCollection {
+                match row.map(|(id, created_by, created_at, hidden_at, hidden_by)| SqlCollection {
                     id,
-                    user_id,
-                    creation_date,
+                    created_by,
+                    created_at,
                     hidden_at,
                         hidden_by,
                 }) {
@@ -254,12 +254,12 @@ impl SqlStigmarksDB {
     pub fn get_all_collections(self: &Self) -> Result<Vec<SqlCollection>, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_map(
-            r"SELECT id, user_id, creation_date, hidden_at, hidden_by FROM collections",
+            r"SELECT id, created_by, created_at, hidden_at, hidden_by FROM collections",
             {},
-            |(id, user_id, creation_date, hidden_at, hidden_by)| SqlCollection {
+            |(id, created_by, created_at, hidden_at, hidden_by)| SqlCollection {
                 id,
-                user_id,
-                creation_date,
+                created_by,
+                created_at,
                 hidden_at,
                 hidden_by,
             },
@@ -272,37 +272,37 @@ impl SqlStigmarksDB {
     // todo: -> Result<Vec<SqlCollection>, Error>
     pub fn get_all_collections_from_user(
         self: &Self,
-        user_id: u32,
+        created_by: u32,
         _stigmer_id: u32,
     ) -> Result<Vec<SqlCollectionPublic>, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_map(
             "   SELECT      C.id,
-                            C.user_id,
+                            C.created_by,
                             U.name,
-                            C.creation_date
+                            C.created_at
                 FROM        collections C,
                             users U
                 LEFT JOIN   followers F
-                        ON  F.follower_id = :user_id
-                WHERE       (       C.user_id = :user_id
+                        ON  F.follower_id = :created_by
+                WHERE       (       C.created_by = :created_by
                                 OR  (
-                                    C.user_id = F.stigmer_id
+                                    C.created_by = F.stigmer_id
                                 AND F.authorized_at IS NOT NULL
                                 AND F.forbidden_at IS NULL )
         
                             )
                         AND C.hidden_at IS NULL
-                        AND U.id = C.user_id
+                        AND U.id = C.created_by
             ",
             params! {
-                "user_id" => user_id,
+                "created_by" => created_by,
             },
-            |(id, user_id, user_name, creation_date)| SqlCollectionPublic {
+            |(id, created_by, user_name, created_at)| SqlCollectionPublic {
                 id,
-                user_id,
+                created_by,
                 user_name,
-                creation_date,
+                created_at,
             },
         ) {
             Ok(rows) => Ok(rows),

@@ -8,13 +8,14 @@ CREATE TABLE IF NOT EXISTS `users` (
     `email` varchar(256) NOT NULL UNIQUE,
     `role` int(11) NOT NULL,
     `hash` varchar(128) NOT NULL,
-    `creation_date` datetime NOT NULL DEFAULT NOW(),
+    `created_at` datetime NOT NULL DEFAULT NOW(),
     `validated_at` datetime DEFAULT NULL,
     `disabled_at` datetime DEFAULT NULL,
     `disabled_by` int(11) DEFAULT NULL,
     `is_private` int(1) NOT NULL DEFAULT 0,
     `is_anonymous` int(1) NOT NULL DEFAULT 0,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    CONSTRAINT `fk_users_disabled_by` FOREIGN KEY (`disabled_by`) REFERENCES `users` (`id`)
 );
 
 CREATE TABLE IF NOT EXISTS `followers` (
@@ -22,7 +23,9 @@ CREATE TABLE IF NOT EXISTS `followers` (
     `follower_id` int(11) NOT NULL,
     `authorized_at` datetime DEFAULT NULL,
     `forbidden_at` datetime DEFAULT NULL,
-    UNIQUE KEY `stigmer_follower` (`stigmer_id`, `follower_id`)
+    UNIQUE KEY `stigmer_follower` (`stigmer_id`, `follower_id`),
+    CONSTRAINT `fk_followers_stigmer_id` FOREIGN KEY (`stigmer_id`) REFERENCES `users` (`id`),
+    CONSTRAINT `fk_followers_follower_id` FOREIGN KEY (`follower_id`) REFERENCES `users` (`id`)
 );
 
 CREATE TABLE IF NOT EXISTS `keywords` (
@@ -43,13 +46,13 @@ CREATE TABLE IF NOT EXISTS `urls` (
 
 CREATE TABLE IF NOT EXISTS `collections` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
-    `user_id` int(11) NOT NULL,
-    `creation_date` datetime NOT NULL DEFAULT NOW(),
+    `created_by` int(11) NOT NULL,
+    `created_at` datetime NOT NULL DEFAULT NOW(),
     `hidden_at` datetime DEFAULT NULL,
     `hidden_by` int(11) DEFAULT NULL,
     PRIMARY KEY (`id`),
-    KEY `fk_collectionuser` (`user_id`),
-    CONSTRAINT `fk_collections_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    KEY `fk_collectionuser` (`created_by`),
+    CONSTRAINT `fk_collections_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
 );
 
 CREATE TABLE IF NOT EXISTS `keyword_lists` (

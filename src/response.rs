@@ -70,7 +70,38 @@ impl<'r>  Responder<'r> for ServerResponse {
         let mut res = Response::build();
         match self {
             Self::Ok() => res.status(Status::Ok),
-            Self::File(file) => res.streamed_body(file),
+            Self::File(file) => {
+                let mut ct = "application/octet-stream";
+                if let Some(ext) = file.path().extension() {
+                    if let Some(ext) = ext.to_str() {
+                        // todo: there must be a library for this
+                        match ext {
+                            "html" | "htm" => {
+                                ct = "text/html";
+                            },
+                            "js" => {
+                                ct = "application/javascript";
+                            },
+                            "json" => {
+                                ct = "application/json";
+                            },
+                            "woff" => {
+                                ct = "font/woff";
+                            },
+                            "woff2" => {
+                                ct = "font/woff2";
+                            },
+                            "css" => {
+                                ct = "text/css";
+                            },
+                            _ => {},
+                        }
+                    }
+                }
+                res
+                    .raw_header("Content-Type", ct)
+                    .streamed_body(file)
+            },
             Self::Json(json, status) => {
                 res.merge(Response::build_from(json.respond_to(&req).unwrap()).finalize())
                     .header(ContentType::JSON)

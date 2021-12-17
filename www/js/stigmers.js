@@ -24,7 +24,14 @@ window.addEventListener('load', evt => {
                 }
                 response.json()
                     .then(subscriptions => {
+                        if (subscriptions.length == 0) {
+                            sectionEl.innerHTML = "you have no subscription yet";
+                            sectionEl.className = "center";
+                            return;
+                        }
+
                         sectionEl.innerHTML = "";
+                        sectionEl.className = "";
 
                         const tableEl = document.createElement('table');
                         sectionEl.appendChild(tableEl);

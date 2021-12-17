@@ -140,10 +140,10 @@ fn stigmarks_get(
         .unwrap()
         .iter()
         .map(|c| {
-            let user_id = c.user_id;
+            let user_id = c.created_by;
             let user_name = c.user_name.clone();
             let collection_id = c.id;
-            let creation_date = c.creation_date;
+            let creation_date = c.created_at;
             let urls = stigmarks_db.get_collection_urls_by_id(collection_id).unwrap();
             let keywords = stigmarks_db.get_collection_keywords_by_id(collection_id).unwrap();
 

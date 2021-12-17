@@ -37,7 +37,14 @@ window.addEventListener('load', evt => {
                 }
                 response.json()
                     .then(collections => {
+                        if (collections.length == 0) {
+                            sectionEl.innerHTML = "you have not collection yet";
+                            sectionEl.className = "center";
+                            return;
+                        }
+
                         sectionEl.innerHTML = "";
+                        sectionEl.className = "";
 
                         const tableEl = document.createElement('table');
                         sectionEl.appendChild(tableEl);

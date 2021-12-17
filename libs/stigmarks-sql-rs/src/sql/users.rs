@@ -28,17 +28,6 @@ use serde::{Deserialize, Serialize};
 
 pub use crate::sql::SqlStigmarksDB;
 
-/*
-CREATE TABLE IF NOT EXISTS `users` (
-    `id` int(11) NOT NULL AUTO_INCREMENT,
-    `name` varchar(256) NOT NULL,
-    `email` varchar(256) NOT NULL UNIQUE,
-    `hash` binary(255) NOT NULL,
-    `creation_date` datetime NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (`id`)
-);
-*/
-
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Role {
     None,
@@ -52,7 +41,8 @@ pub struct SqlUser {
     pub name: String,
     pub email: String,
     pub hash: Vec<u8>,
-    pub creation_date: NaiveDateTime,
+    pub created_at: NaiveDateTime,
+    pub validated_at: Option<NaiveDateTime>,
     pub disabled_at: Option<mysql::chrono::NaiveDateTime>,
     pub disabled_by: Option<u32>,
     pub is_private: bool,
@@ -100,7 +90,7 @@ impl SqlStigmarksDB {
     pub fn get_user_by_id(self: &Self, user_id: u32) -> Result<SqlUser, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_first(
-            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by, is_private, is_anonymous FROM users where id=:id",
+            r"SELECT id, name, email, hash, created_at, validated_at, disabled_at, disabled_by, is_private, is_anonymous FROM users where id=:id",
             params! {
                 "id" => user_id,
             },
@@ -110,12 +100,13 @@ impl SqlStigmarksDB {
         }
         let row = res.unwrap();
         let res = row.map(
-            |(id, name, email, hash, creation_date, disabled_at, disabled_by, is_private, is_anonymous)| SqlUser {
+            |(id, name, email, hash, created_at, validated_at, disabled_at, disabled_by, is_private, is_anonymous)| SqlUser {
                 id,
                 name,
                 email,
                 hash,
-                creation_date,
+                created_at,
+                validated_at,
                 disabled_at,
                 disabled_by,
                 is_private,
@@ -132,14 +123,15 @@ impl SqlStigmarksDB {
     pub fn get_all_users(self: &Self) -> Result<Vec<SqlUser>, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_map(
-            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by, is_private, is_anonymous FROM users",
+            r"SELECT id, name, email, hash, created_at, validated_at, disabled_at, disabled_by, is_private, is_anonymous FROM users",
             {},
-            |(id, name, email, hash, creation_date, disabled_at, disabled_by, is_private, is_anonymous)| SqlUser {
+            |(id, name, email, hash, created_at, validated_at, disabled_at, disabled_by, is_private, is_anonymous)| SqlUser {
                 id,
                 name,
                 email,
                 hash,
-                creation_date,
+                created_at,
+                validated_at,
                 disabled_at,
                 disabled_by,
                 is_private,
@@ -156,7 +148,7 @@ impl SqlStigmarksDB {
     pub fn get_user_by_email(self: &Self, user_email: &String) -> Result<SqlUser, String> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         let res = conn.exec_first(
-            r"SELECT id, name, email, hash, creation_date, disabled_at, disabled_by, is_private, is_anonymous FROM users where email=:email",
+            r"SELECT id, name, email, hash, created_at, validated_at, disabled_at, disabled_by, is_private, is_anonymous FROM users where email=:email",
             params! {
                 "email" => user_email
             },
@@ -165,12 +157,13 @@ impl SqlStigmarksDB {
             return Err(format!("get_user_by_auth failed: {}", err));
         }
         let row = res.unwrap();
-        let res = row.map(|(id, name, email, hash, creation_date, disabled_at, disabled_by, is_private, is_anonymous)| SqlUser {
+        let res = row.map(|(id, name, email, hash, created_at, validated_at, disabled_at, disabled_by, is_private, is_anonymous)| SqlUser {
             id,
             name,
             email,
             hash,
-            creation_date,
+            created_at,
+            validated_at,
             disabled_at,
             disabled_by,
             is_private,
