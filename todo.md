@@ -1,3 +1,5 @@
+[ ] front:      add url removal/insertion
+[ ] front:      add keword removal/insertion
 [ ] back/front: handle user validation
 [X] back:       document api
 [ ] back:       do not insert empty keywords / urls
@@ -16,6 +18,7 @@
 [ ] front:      finish forgot page + api
 [ ] extension:  add news page
 [ ] extension:  add config page
+[ ] extension:  - add list of blacklisted urls
 [ ] extension:  link to bookmarks
 [ ] front:      add admin page
 [ ] back:       add user management (admin)
