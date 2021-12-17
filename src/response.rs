@@ -71,35 +71,16 @@ impl<'r>  Responder<'r> for ServerResponse {
         match self {
             Self::Ok() => res.status(Status::Ok),
             Self::File(file) => {
-                let mut ct = "application/octet-stream";
+                let mut content_type = ContentType::Binary;
                 if let Some(ext) = file.path().extension() {
                     if let Some(ext) = ext.to_str() {
-                        // todo: there must be a library for this
-                        match ext {
-                            "html" | "htm" => {
-                                ct = "text/html";
-                            },
-                            "js" => {
-                                ct = "application/javascript";
-                            },
-                            "json" => {
-                                ct = "application/json";
-                            },
-                            "woff" => {
-                                ct = "font/woff";
-                            },
-                            "woff2" => {
-                                ct = "font/woff2";
-                            },
-                            "css" => {
-                                ct = "text/css";
-                            },
-                            _ => {},
+                        if let Some(tmp) = ContentType::from_extension(ext) {
+                            content_type = tmp
                         }
                     }
                 }
                 res
-                    .raw_header("Content-Type", ct)
+                    .header(content_type)
                     .streamed_body(file)
             },
             Self::Json(json, status) => {
