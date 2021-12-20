@@ -28,30 +28,47 @@ use crate::response::ServerResponse;
 use crate::basicauth::BasicAuth;
 use rocket::State;
 
-pub struct BasicState (String, String);
+pub struct FileState {
+    user: String,
+    pass: String,
+    www_dir: String,
+}
 
-const BASIC_AUTH_USER: &str = "foo";
-const BASIC_AUTH_PASS: &str = "bar";
+impl FileState {
+    pub fn new<S: Into<String>>(user: S, pass: S, dir: S) -> Self {
+        FileState {
+            user: user.into(),
+            pass: pass.into(),
+            www_dir: dir.into(),
+        }
+    }
+}
 
 // GET https://stigmark.stigmee.com/
 #[get("/", rank = 2)]
-fn files_slash(auth: BasicAuth, state: State<BasicState>) -> ServerResponse {
+fn files_slash(auth: BasicAuth, state: State<FileState>) -> ServerResponse {
     println!("stigmarks: '{}' GET /", auth.name);
-    if auth.name != BASIC_AUTH_USER || auth.pass != BASIC_AUTH_PASS {
+    let state = state.inner();
+    if auth.name != state.user || auth.pass != state.pass {
         return ServerResponse::basic_auth()
     }
-    let path = Path::new("www/index.htm");
+    let www_path = Path::new(&state.www_dir);
+    let path = www_path.join("index.htm");
+    println!("stigmarks: www-path={:?} file-path={:?}", www_path, path);
     ServerResponse::file(&path)
 }
 
 // GET https://stigmark.stigmee.com/*
 #[get("/<file..>", rank = 3)]
-fn files_others(auth: BasicAuth, state: State<BasicState>, file: PathBuf) -> ServerResponse {
+fn files_others(auth: BasicAuth, state: State<FileState>, file: PathBuf) -> ServerResponse {
     println!("stigmarks: '{}' GET {:?}", auth.name, file);
-    if auth.name != BASIC_AUTH_USER || auth.pass != BASIC_AUTH_PASS {
+    let state = state.inner();
+    if auth.name != state.user || auth.pass != state.pass {
         return ServerResponse::basic_auth()
     }
-    let path = Path::new("www/").join(file);
+    let www_path = Path::new(&state.www_dir);
+    let path = www_path.join(file);
+    println!("stigmarks: www-path={:?} file-path={:?}", www_path, path);
     ServerResponse::file(&path)
 }
 

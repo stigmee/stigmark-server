@@ -41,7 +41,7 @@ mod stigmarks;
 mod stigmers;
 mod token;
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
-use files::BasicState;
+use files::FileState;
 
 fn main() {
     let mut api_routes = stigmarks::routes();
@@ -53,16 +53,27 @@ fn main() {
     rocket::ignite()
         .attach(CORS)
         .attach(AdHoc::on_attach("basic_cred", |rocket| {
-            let val = rocket
-                .config()
+            let cfg = rocket.config();
+            let val = cfg
                 .get_string("basic_cred")
                 .unwrap_or("".to_string());
-            let creds: Vec<&str> = val.split(';').collect();
-            if creds.len() != 2 {
-                println!("invalid credantial. Expected user;pass");
-                return Err(rocket);
+            let mut dir = cfg
+                .get_string("www_dir")
+                .unwrap_or("".to_string());
+            if dir == "" {
+                println!("Invalid www_dir: using 'www'");
+                dir = "www".to_string();
             }
-            Ok(rocket.manage(BasicState(creds[0].to_string(), creds[1].to_string())))
+            let mut user = "";
+            let mut pass = "";
+            let creds: Vec<&str> = val.split(';').collect();
+            if creds.len() == 2 {
+                user = creds[0];
+                pass = creds[1];
+            } else {
+                println!("Invalid credantial: expected 'user;pass'");
+            }
+            Ok(rocket.manage(FileState::new(user, pass, &dir)))
         }))
         .attach(AdHoc::on_attach("db_cred", |rocket| {
             let val = rocket
