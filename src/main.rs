@@ -1,46 +1,47 @@
-// 
+//
 //  Stigmee: A 3D browser and decentralized social network.
 //  Copyright 2021 Philippe Anel <zexigh@gmail.com>
-// 
+//
 //  This file is part of Stigmee.
-// 
+//
 //  Project : Stigmark
 //  Version : 0.0-1
-// 
+//
 //  Stigmee is free software: you can redistribute it and/or modify it
 //  under the terms of the GNU General Public License as published by
 //  the Free Software Foundation, either version 3 of the License, or
 //  (at your option) any later version.
-// 
+//
 //  This program is distributed in the hope that it will be useful, but
 //  WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 //  General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
+//
 
 #![feature(proc_macro_hygiene, decl_macro)]
 
 #[macro_use]
 extern crate rocket;
-use rocket::fairing::AdHoc;
 use cors::CORS;
+use rocket::fairing::AdHoc;
 
 // stigmark stuff
-mod stigmarks;
-mod token;
-mod login;
-mod signup;
-mod stigmers;
-mod followers;
-mod files;
-mod response;
 mod basicauth;
-mod jwtauth;
 mod cors;
+mod files;
+mod followers;
+mod jwtauth;
+mod login;
+mod response;
+mod signup;
+mod stigmarks;
+mod stigmers;
+mod token;
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
+use files::BasicState;
 
 fn main() {
     let mut api_routes = stigmarks::routes();
@@ -51,9 +52,24 @@ fn main() {
 
     rocket::ignite()
         .attach(CORS)
+        .attach(AdHoc::on_attach("basic_cred", |rocket| {
+            let val = rocket
+                .config()
+                .get_string("basic_cred")
+                .unwrap_or("".to_string());
+            let creds: Vec<&str> = val.split(';').collect();
+            if creds.len() != 2 {
+                println!("invalid credantial. Expected user;pass");
+                return Err(rocket);
+            }
+            Ok(rocket.manage(BasicState(creds[0].to_string(), creds[1].to_string())))
+        }))
         .attach(AdHoc::on_attach("db_cred", |rocket| {
-            let val = rocket.config().get_string("db_cred").unwrap_or("".to_string());
-            let creds: Vec<&str> = val.split(';').collect( );
+            let val = rocket
+                .config()
+                .get_string("db_cred")
+                .unwrap_or("".to_string());
+            let creds: Vec<&str> = val.split(';').collect();
             if creds.len() != 2 {
                 println!("invalid credantial. Expected user;pass");
                 return Err(rocket);

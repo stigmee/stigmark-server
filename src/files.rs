@@ -26,12 +26,18 @@ use rocket::Route;
 
 use crate::response::ServerResponse;
 use crate::basicauth::BasicAuth;
+use rocket::State;
+
+pub struct BasicState (String, String);
+
+const BASIC_AUTH_USER: &str = "foo";
+const BASIC_AUTH_PASS: &str = "bar";
 
 // GET https://stigmark.stigmee.com/
 #[get("/", rank = 2)]
-fn files_slash(auth: BasicAuth) -> ServerResponse {
+fn files_slash(auth: BasicAuth, state: State<BasicState>) -> ServerResponse {
     println!("stigmarks: '{}' GET /", auth.name);
-    if auth.name != "stigmer" || auth.pass != "tabarnak" {
+    if auth.name != BASIC_AUTH_USER || auth.pass != BASIC_AUTH_PASS {
         return ServerResponse::basic_auth()
     }
     let path = Path::new("www/index.htm");
@@ -40,9 +46,9 @@ fn files_slash(auth: BasicAuth) -> ServerResponse {
 
 // GET https://stigmark.stigmee.com/*
 #[get("/<file..>", rank = 3)]
-fn files_others(auth: BasicAuth, file: PathBuf) -> ServerResponse {
+fn files_others(auth: BasicAuth, state: State<BasicState>, file: PathBuf) -> ServerResponse {
     println!("stigmarks: '{}' GET {:?}", auth.name, file);
-    if auth.name != "stigmer" || auth.pass != "tabarnak" {
+    if auth.name != BASIC_AUTH_USER || auth.pass != BASIC_AUTH_PASS {
         return ServerResponse::basic_auth()
     }
     let path = Path::new("www/").join(file);
