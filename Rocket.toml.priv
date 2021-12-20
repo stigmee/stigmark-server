@@ -1,7 +1,8 @@
 [global]
 address = "0.0.0.0"
 port = 8000
-db_cred = "stigmark;yAfisEra"
+db_cred = "foo;bar"
+basic_cred = "foo:bar"
 
 [development]
 log = "normal"
