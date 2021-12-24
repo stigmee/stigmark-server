@@ -23,6 +23,7 @@
 
 import { requestUrl } from "./urls.js";
 import { debug_log } from "./debug.js";
+// import { add_bookmarks } from "./chrome-ext.js";
 
 export function api_send_urls_and_keywords(token, urls, keywords) {
     debug_log(`sending urls=${JSON.stringify(urls)} and keywords=${JSON.stringify(keywords)}`);
@@ -42,6 +43,7 @@ export function api_send_urls_and_keywords(token, urls, keywords) {
                     res.json()
                         .then(data => {
                             debug_log(data);
+                            // add_bookmarks(urls, keywords);
                         })
                         .catch(err => {
                             debug_log(`could not decode json: ${err}`);

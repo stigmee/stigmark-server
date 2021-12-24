@@ -24,7 +24,7 @@
 import { debug_log } from "./debug.js";
 import { get_all_tabs } from "./chrome-ext.js";
 import { api_send_urls_and_keywords } from "./stigmark.js";
-import { is_logged } from "./token.js";
+import { is_logged } from "./api-stigmark.js";
 
 let stigmark_instance = null;
 
@@ -157,6 +157,7 @@ export function init_stigmark_page(page_nav, msg_ctrl) {
     return {
         show: function (token) {
             debug_log('showing "stigmark" page');
+            msg_ctrl.close();
             update_tabs();
             stigmark_instance.page.classList.remove('hidden');
         },

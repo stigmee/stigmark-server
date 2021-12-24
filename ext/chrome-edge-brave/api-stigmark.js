@@ -21,7 +21,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // 
 
-import { loginUrl } from "./urls.js";
+import { loginUrl, signupUrl } from "./urls.js";
 import { debug_log } from "./debug.js";
 
 export function is_logged() {
@@ -46,12 +46,12 @@ export function is_logged() {
     });
 }
 
-export function api_login(email, passwd) {
-    debug_log(`login: ${email}`);
+export function api_login(mail, passwd) {
+    debug_log(`api-login: ${mail}`);
     return new Promise((resolve, reject) => {
-        debug_log(`login: in-promise`);
+        debug_log(`api-login: in-promise`);
         const body = {
-            mail: email,
+            mail: mail,
             pass: passwd,
         };
         const loginData = {
@@ -59,29 +59,71 @@ export function api_login(email, passwd) {
             headers: { 'Content-Type': 'application/json; charset=utf-8' },
             body: JSON.stringify(body),
         };
-        debug_log('sending login request');
+        debug_log('api-login: sending login request');
         fetch(loginUrl, loginData)
             .then(res => {
-                debug_log(`fetch returned ${res.status}`);
+                debug_log(`api-login: fetch returned ${res.status}`);
                 if (res.status >= 200 && res.status < 300) {
                     res.json()
                         .then(data => {
-                            debug_log(`fetch data`);
+                            debug_log(`api-login: fetch data`);
                             resolve(data);
                         })
                         .catch(err => {
-                            debug_log(`could not decode json: ${err}`)
+                            debug_log(`api-login: could not decode json: ${err}`)
                             reject(err);
                         })
                         ;
                     return true;
                 }
-                debug_log(`fetch failed`);
-                reject(`fetch failed`);
+                debug_log(`api-login: fetch failed`);
+                reject(`api-login: fetch failed`);
             })
             .catch(err => {
-                debug_log(`fetch crashed with ${err}`);
-                reject(`fetch crashed with ${err}`);
+                debug_log(`api-login: fetch crashed with ${err}`);
+                reject(`api-login: fetch crashed with ${err}`);
+            })
+            ;
+    });
+}
+
+export function api_signup(name, mail, pass) {
+    debug_log(`api-signup: ${mail}`);
+    return new Promise((resolve, reject) => {
+        debug_log(`api-signup: in-promise`);
+        const body = JSON.stringify({
+            user: name,
+            mail: mail,
+            pass: pass,
+        });
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        const signupData = {
+            method: 'POST',
+            cache: 'no-cache',
+            headers: headers,
+            body: body,
+        };
+        const request = fetch(signupUrl, signupData);
+        request
+            .then(res => {
+                if (res.status >= 200 && res.status < 300) {
+                    res.json()
+                        .then(data => {
+                            debug_log(`api-signup: fetch data`);
+                            resolve(data);
+                        })
+                        .catch(err => {
+                            debug_log(`api-signup: could not decode json: ${err}`)
+                            reject(err);
+                        });
+                }
+                debug_log(`api-signup: fetch failed with ${res.status}`);
+                reject(`api-signup: ${res.status}`);
+            })
+            .catch(err => {
+                debug_log(`api-signup: fetch crashed with ${err}`);
+                reject(`api-signup: fetch crashed with ${err}`);
             })
             ;
     });

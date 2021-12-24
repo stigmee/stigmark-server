@@ -37,3 +37,18 @@ export function storgage_set(object) {
 export function storage_remove(name) {
     return chrome.storage.local.remove(name);
 }
+
+/*
+export function add_bookmarks(urls, keywords) {
+    let found = 0;
+    chrome.bookmarks.get("stigmarks", results => {
+        console.log(results);
+        if (results) {
+            results.forEach(result => {
+                console.log(result);
+                found++;
+            });
+        }
+    });
+}
+*/

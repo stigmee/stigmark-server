@@ -44,6 +44,7 @@ export function init_follow_page(page_nav, msg_ctrl) {
     return {
         show: function() {
             debug_log('showing "follow" page');
+            msg_ctrl.close();
             follow_instance.page.classList.remove('hidden');
         },
 

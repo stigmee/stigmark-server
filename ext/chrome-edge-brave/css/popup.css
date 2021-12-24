@@ -98,6 +98,11 @@ textarea {
     display: block;
     padding: 5px 3px;
     width: 100%;
+    border: 1px solid transparent;
+}
+
+input.error {
+    border-color: #f00;
 }
 
 textarea {

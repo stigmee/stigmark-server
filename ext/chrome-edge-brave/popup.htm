@@ -19,15 +19,39 @@
     <div id="message-box" class="hidden"></div>
 
     <main>
-        <section id="signin-page" class="hidden">
-            <div><h2>Don't have an account yet?</h2> <a id="signup" href="#">Sign up</a></div>
+        <section id="login-page" class="hidden">
+            <div><h2>Don't have an account yet?</h2> <a id="login-signup-link" href="#">Sign up</a></div>
             <div>email:</div>
-            <div><input id="mail-input" type="text" placeholder="name@domain.ltd" /></div>
+            <div><input id="login-mail-input" type="text" placeholder="name@domain.ltd" /></div>
             <div>password:</div>
-            <div><input id="pass-input" type="password" placeholder="shhhhhhhtttt...." /></div>
-            <div><a id="forgot" href="#">forgot password ?</a></div>
+            <div><input id="login-pass-input" type="password" placeholder="shhhhhhhtttt...." /></div>
+            <div><a id="login-forgot-link" href="#">forgot password ?</a></div>
             <div class="right">
                 <button id="login-btn">Login</button>
+            </div>
+        </section>
+
+        <section id="signup-page" class="hidden">
+            <div><h2>Already have an account?</h2> <a id="signup-login-link" href="#">Log in</a></div>
+            <div>name:</div>
+            <div><input id="signup-name-input" type="text" placeholder="Jean Douvoir" /></div>
+            <div>email:</div>
+            <div><input id="signup-mail-input" type="text" placeholder="name@domain.ltd" /></div>
+            <div>password:</div>
+            <div><input id="signup-pass1-input" type="password" placeholder="shhhhhhhtttt...." /></div>
+            <div>confirm password:</div>
+            <div><input id="signup-pass2-input" type="password" placeholder="shhhhhhhtttt...." /></div>
+            <div class="right">
+                <button id="signup-btn">Signup</button>
+            </div>
+        </section>
+
+        <section id="forgot-page" class="hidden">
+            <div><h2>Don't have an account yet?</h2> <a id="forgot-signup-link" href="#">Sign up</a></div>
+            <div>email:</div>
+            <div><input id="forgot-mail-input" type="text" placeholder="name@domain.ltd" /></div>
+            <div class="right">
+                <button class="disabled" id="forgot-btn">Recover</button>
             </div>
         </section>
 
@@ -35,7 +59,7 @@
             <div><h2>Please type the email address you want to follow:</h2></div>
             <div><input id="follow-input" type="email" placeholder="stigmer@example.com"></input></div>
             <div class="right">
-                <button id="follow-btn">Follow</button>
+                <button id="follow-btn">Subscribe</button>
             </div>
             <div id="follow-list-title">Stigmers you follow:</div>
             <div>
@@ -55,7 +79,7 @@
             <div><textarea id="keywords-input" rows=3 placeholder="keyword1, keyword2, keyword3, ..."></textarea></div>
             <div id="selected-only-div"><input id="selected-only-checkbox" type="checkbox"></input> Save only selected tabs</div>
             <div class="right">
-                <button id="send-btn">Send</button>
+                <button id="send-btn">Add collection</button>
             </div>
             <div id="stigmark-list-title">Tabs/URLs to send:</div>
             <div>

@@ -44,6 +44,7 @@ export function init_search_page(page_nav, msg_ctrl) {
     return {
         show: function() {
             debug_log('showing "search" page');
+            msg_ctrl.close();
             search_instance.page.classList.remove('hidden');
         },
 

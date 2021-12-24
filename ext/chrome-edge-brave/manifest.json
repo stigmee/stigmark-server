@@ -1,10 +1,11 @@
 {
     "name": "Stigmark",
-    "version": "1.1",
+    "version": "0.2.1",
     "manifest_version": 3,
     "icons": {
         "48": "icons/BMButton.png"
     },
+    "description": "Stigmark allows you to share your opened tabulations with others in a secured and simple manner.",
     "background": {
         "service_worker": "background.js"
     },
@@ -13,7 +14,6 @@
     },
     "permissions": [
         "tabs",
-        "storage",
-        "unlimitedStorage"
+        "storage"
     ]
 }

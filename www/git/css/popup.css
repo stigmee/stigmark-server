@@ -26,11 +26,6 @@ html, body {
 .center {
   text-align: center; }
 
-input {
-  border: 1px solid transparent; }
-  input.error {
-    border-color: #f00; }
-
 main {
   margin: 5px auto;
   padding: 0 10px;
@@ -109,4 +104,4 @@ section {
     section table tr + tr {
       border-top: 1px solid #eacc78; }
 
-/*# sourceMappingURL=styles.css.map */
+/*# sourceMappingURL=popup.css.map */

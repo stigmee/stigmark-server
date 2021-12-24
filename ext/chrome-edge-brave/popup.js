@@ -24,11 +24,13 @@
 import { debug_log } from "./debug.js";
 import { init_message } from "./ui-message.js";
 import { init_login_page } from "./ui-login.js";
+import { init_signup_page } from "./ui-signup.js";
+import { init_forgot_page } from "./ui-forgot.js";
 import { init_navtab } from "./ui-navtab.js";
 import { init_stigmark_page } from "./ui-stigmark.js";
 import { init_follow_page } from "./ui-follow.js";
 import { init_search_page } from "./ui-search.js";
-import { is_logged } from "./token.js";
+import { is_logged } from "./api-stigmark.js";
 import { storage_remove } from "./chrome-ext.js";
 
 window.addEventListener('load', () => {
@@ -38,6 +40,14 @@ window.addEventListener('load', () => {
     const nav_ctrl = init_navtab(msg_ctrl);
     if (nav_ctrl.add_page('login', init_login_page, false) === false) {
         msg_ctrl.alert('could not initialize page "login"');
+        return;
+    }
+    if (nav_ctrl.add_page('signup', init_signup_page, false) === false) {
+        msg_ctrl.alert('could not initialize page "signup"');
+        return;
+    }
+    if (nav_ctrl.add_page('forgot', init_forgot_page, false) === false) {
+        msg_ctrl.alert('could not initialize page "forgot"');
         return;
     }
     if (nav_ctrl.add_page('search', init_search_page, true, 'search') === false) {

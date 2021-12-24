@@ -22,57 +22,56 @@
 // 
 
 import { debug_log } from "./debug.js";
-import { api_login } from "./token.js";
-import { signupUrl, forgotUrl } from "./urls.js";
-import { create_tab, storgage_set } from "./chrome-ext.js";
+import { api_login } from "./api-stigmark.js";
+import { storgage_set } from "./chrome-ext.js";
 
 let login_instance = null;
 
 export function init_login_page(page_nav, msg_ctrl) {
-    debug_log('init_login_page');
+    debug_log('init_login_page 2');
 
     if (login_instance === null) {
         const instance = {};
 
-        instance.page = document.querySelector('#signin-page');
+        instance.page = document.querySelector('#login-page');
         if (!instance.page) {
-            debug_log('#signin-page not found');
+            debug_log('#login-page not found');
             return false;
         }
 
         // ------------------------------------------------
 
-        instance.signupLinkEl = document.querySelector('#signup');
+        instance.signupLinkEl = document.querySelector('#login-signup-link');
         if (!instance.signupLinkEl) {
-            debug_log('#signup not found');
+            debug_log('#login-signup-link not found');
             return false;
         }
         instance.signupLinkEl.addEventListener('click', evt => {
-            debug_log('opening signup page in new tab');
+            debug_log('opening signup page');
             evt.preventDefault();
-            create_tab(signupUrl);
+            page_nav.switch_to('signup');
         });
 
-        instance.forgotLinkEl = document.querySelector('#forgot');
+        instance.forgotLinkEl = document.querySelector('#login-forgot-link');
         if (!instance.forgotLinkEl) {
-            debug_log('#forgot not found');
+            debug_log('#login-forgot-link not found');
             return false;
         }
         instance.forgotLinkEl.addEventListener('click', evt => {
-            debug_log('opening forgot page in new tab');
+            debug_log('opening forgot page');
             evt.preventDefault();
-            create_tab(forgotUrl);
+            page_nav.switch_to('forgot');
         });
 
         // ------------------------------------------------
 
-        instance.mailInputEl = document.querySelector('#mail-input');
+        instance.mailInputEl = document.querySelector('#login-mail-input');
         if (!instance.mailInputEl) {
-            debug_log('#mail-input not found');
+            debug_log('#login-mail-input not found');
             return false;
         }
 
-        instance.passInputEl = document.querySelector('#pass-input');
+        instance.passInputEl = document.querySelector('#login-pass-input');
         if (!instance.passInputEl) {
             debug_log('#pass-input not found');
             return false;
@@ -85,16 +84,32 @@ export function init_login_page(page_nav, msg_ctrl) {
         }
         instance.loginBtnEl.addEventListener('click', evt => {
             debug_log('clicked login');
-            msg_ctrl.close();
-
             evt.preventDefault();
-            const token = api_login(instance.mailInputEl.value, instance.passInputEl.value)
+
+            msg_ctrl.close();
+            instance.mailInputEl.classList.remove('error');
+            instance.passInputEl.classList.remove('error');
+
+            const mail = instance.mailInputEl.value;
+            if ((typeof mail !== "string") || mail.trim() == "") {
+                msg_ctrl.alert(`invalid mail address`);
+                instance.mailInputEl.classList.add('error');
+                return;
+            }
+            const pass = instance.passInputEl.value;
+            if ((typeof pass !== "string") || pass.trim() == "") {
+                msg_ctrl.alert(`invalid password`);
+                instance.passInputEl.classList.add('error');
+                return;
+            }
+
+            api_login(mail, pass)
                 .then(data => {
                     debug_log(`logged with token ${data.token}`);
                     storgage_set({ token: data.token })
                         .catch(err => {
-                            debug_log(`could update token ${err}`);
-                            msg_ctrl.alert(`could update token`);
+                            debug_log(`could not update token: ${err}`);
+                            msg_ctrl.alert(`could not update token`);
                         })
                         .then(_ => {
                             page_nav.switch_to('stigmark');
@@ -115,6 +130,7 @@ export function init_login_page(page_nav, msg_ctrl) {
     return {
         show: function() {
             debug_log('showing "login" page');
+            msg_ctrl.close();
             login_instance.page.classList.remove('hidden');
         },
 
