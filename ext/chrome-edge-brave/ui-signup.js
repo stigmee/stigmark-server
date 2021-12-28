@@ -23,6 +23,7 @@
 
 import { api_signup } from "./api-stigmark.js";
 import { debug_log } from "./debug.js";
+import { storgage_set } from "./chrome-ext.js";
 
 let signup_instance = null;
 

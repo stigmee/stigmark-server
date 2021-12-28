@@ -116,27 +116,57 @@ impl SqlStigmarksDB {
     }
 
     fn add_url(self: &Self, url: &String) -> Result<u32, String> {
+        let lock = self.url_mutex.lock();
+        if let Err(poison) = lock {
+            return Err(format!("mutex poison: {}", poison));
+        }
+
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
-        match conn.exec_drop(
-            r"INSERT INTO urls (url) VALUES (:url) ON DUPLICATE KEY UPDATE ref_count = ref_count + 1",
+
+        match conn.exec_first(
+            r"SELECT id FROM urls WHERE urls.url=:url",
             params! {
-                    "url" => url,
+                "url" => url,
             },
         ) {
-            Ok(_) => {
-                let mut url_id = conn.last_insert_id() as u32;
-                if url_id == 0 {
-                    url_id = match self.get_url_id_by_name(url) {
-                        Ok(url_id) => url_id,
-                        Err(_) => 0,
+            Ok(row) => match row {
+                Some(url_id) => {
+                    let res = conn.exec_drop(
+                        r"UPDATE urls SET ref_count = ref_count + 1 WHERE id=:url_id",
+                        params! {
+                            "url_id" => url_id,
+                        }
+                    );
+                    if let Err(err) = res {
+                        return Err(format!("failed to update count: {}", err));
                     }
-                };
-                if url_id == 0 {
-                    return Err(format!("could not find {} url_id", url));
+                    Ok(url_id)
+                },
+                None => {
+                    match conn.exec_drop(
+                        r"INSERT INTO urls (url) VALUES (:url)",
+                        params! {
+                            "url" => url,
+                        },
+                    ) {
+                        Ok(_) => {
+                            let mut url_id = conn.last_insert_id() as u32;
+                            if url_id == 0 {
+                                url_id = match self.get_url_id_by_name(url) {
+                                    Ok(url_id) => url_id,
+                                    Err(_) => 0,
+                                }
+                            };
+                            if url_id == 0 {
+                                return Err(format!("could not find {} url_id", url));
+                            }
+                            Ok(url_id)
+                        }
+                        Err(err) => Err(format!("insert.err: {}", err)),
+                    }
                 }
-                Ok(url_id)
-            }
-            Err(err) => Err(format!("insert.err: {}", err)),
+            },
+            Err(err) => Err(format!("select.err: {}", err)),
         }
     }
 
@@ -189,8 +219,14 @@ impl SqlStigmarksDB {
         ) {
             Ok(_) => {
                 let collection_id = conn.last_insert_id() as u32;
+                println!("added collection {}", collection_id);
                 // add keywords
+                println!("keywords count {}", keywords.len());
                 for keyword in keywords {
+                    if keyword.trim() == "" {
+                        continue;
+                    }
+                    println!("adding keyword {}", keyword);
                     match self.add_keyword(keyword) {
                         Ok(keyword_id) => {
                             match self.add_keyword_to_collection(collection_id, keyword_id) {
@@ -206,7 +242,12 @@ impl SqlStigmarksDB {
                     }
                 }
                 // add urls
+                println!("urls count {}", urls.len());
                 for url in urls {
+                    if url.trim() == "" {
+                        continue;
+                    }
+                    println!("adding url {}", url);
                     match self.add_url(url) {
                         Ok(url_id) => match self.add_url_to_collection(collection_id, url_id) {
                             Ok(_) => {}

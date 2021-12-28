@@ -21,6 +21,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+/*
 use crate::jwtauth::JwtAuth;
 use crate::response::ServerResponse;
 use rocket::http::Status;
@@ -30,7 +31,7 @@ use rocket_contrib::json::Json;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-struct FollowRequest {
+struct SearchRequest {
     urls: Vec<String>,
     keys: Vec<String>,
     token: Option<String>,
@@ -38,18 +39,18 @@ struct FollowRequest {
 
 // OPTIONS https://stigmark.stigmee.com/api/v1/search
 #[options("/search", rank = 1)]
-fn follow_options() -> ServerResponse {
+fn search_options() -> ServerResponse {
     ServerResponse::ok()
 }
 
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
 
-// POST https://stigmark.stigmee.com/api/v1/search
-#[post("/search", format = "json", data = "<mark>", rank = 1)]
-fn follow_post(
+// GET https://stigmark.stigmee.com/api/v1/search
+#[get("/search", format = "json", data = "<mark>", rank = 1)]
+fn search_post(
     auth: JwtAuth,
     state: State<SqlStigmarksDB>,
-    mark: Json<StigmarkRequest>,
+    mark: Json<SearchRequest>,
 ) -> ServerResponse {
     let mut user_id = 0u32;
     if let Some(claims) = auth.claims {
@@ -84,5 +85,6 @@ fn follow_post(
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![follow_options, follow_post]
+    routes![search_options, search_post]
 }
+*/

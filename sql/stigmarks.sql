@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `is_anonymous` int(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     CONSTRAINT `fk_users_disabled_by` FOREIGN KEY (`disabled_by`) REFERENCES `users` (`id`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS `followers` (
     `stigmer_id` int(11) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `followers` (
     UNIQUE KEY `stigmer_follower` (`stigmer_id`, `follower_id`),
     CONSTRAINT `fk_followers_stigmer_id` FOREIGN KEY (`stigmer_id`) REFERENCES `users` (`id`),
     CONSTRAINT `fk_followers_follower_id` FOREIGN KEY (`follower_id`) REFERENCES `users` (`id`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS `keywords` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -34,15 +34,15 @@ CREATE TABLE IF NOT EXISTS `keywords` (
     `ref_count` int(11) NOT NULL DEFAULT 1,
     PRIMARY KEY (`id`),
     UNIQUE KEY `keyword` (`keyword`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS `urls` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `url` varchar(2048) NOT NULL,
     `ref_count` int(11) NOT NULL DEFAULT 1,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `url` (`url`) USING HASH
-);
+    KEY `url` (`url`) USING HASH
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS `collections` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS `collections` (
     PRIMARY KEY (`id`),
     KEY `fk_collectionuser` (`created_by`),
     CONSTRAINT `fk_collections_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS `keyword_lists` (
     `collection_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS `keyword_lists` (
     CONSTRAINT `fk_keyword_lists_collections_id` FOREIGN KEY (`collection_id`) REFERENCES `collections` (`id`),
     CONSTRAINT `fk_keyword_lists_keywords_id` FOREIGN KEY (`keyword_id`) REFERENCES `keywords` (`id`),
     CONSTRAINT `fk_keyword_lists_primary_key` PRIMARY KEY (`collection_id`, `keyword_id`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS `url_lists` (
     `collection_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS `url_lists` (
     CONSTRAINT `fk_url_lists_collection_id` FOREIGN KEY (`collection_id`) REFERENCES `collections` (`id`),
     CONSTRAINT `fk_url_lists_url_id` FOREIGN KEY (`url_id`) REFERENCES `urls` (`id`),
     CONSTRAINT `fk_url_lists_primary_key` PRIMARY KEY (`collection_id`, `url_id`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS `url_scoring` (
     `url_id` int(11) NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS `url_scoring` (
     PRIMARY KEY (`url_id`, `keyword_id`),
     CONSTRAINT `fk_url_scoring_url_id` FOREIGN KEY (`url_id`) REFERENCES `urls` (`id`),
     CONSTRAINT `fk_url_scoring_keyword_id` FOREIGN KEY (`keyword_id`) REFERENCES `keywords` (`id`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS `stigmee_events` (
     `event_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -103,4 +103,4 @@ PARTITION BY RANGE (UNIX_TIMESTAMP(`event_date`))
 	PARTITION p2 VALUES LESS THAN (UNIX_TIMESTAMP('2024-01-01 00:00:00')),
 	PARTITION p3 VALUES LESS THAN (UNIX_TIMESTAMP('2025-01-01 00:00:00')),
 	PARTITION pmax VALUES LESS THAN (MAXVALUE)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;

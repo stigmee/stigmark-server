@@ -65,6 +65,9 @@ fn signup_post(state: State<SqlStigmarksDB>, req: Json<SignupRequest>) -> Server
     let res = stigmarks_db.add_user(&req.user, &req.mail, Role::User, hash.as_str().as_bytes().to_vec());
     if let Err(err) = res { 	
         eprintln!("add user failed with: {}", err);
+        if err.contains("Duplicate") {
+            return ServerResponse::error(err, Status::Conflict);
+        }
         return ServerResponse::error(err, Status::InternalServerError);
     }
     let token = create_token(res.unwrap()).unwrap();

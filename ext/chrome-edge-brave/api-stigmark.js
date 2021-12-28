@@ -21,7 +21,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // 
 
-import { loginUrl, signupUrl } from "./urls.js";
+import { loginUrl, signupUrl, followUrl } from "./urls.js";
 import { debug_log } from "./debug.js";
 
 export function is_logged() {
@@ -117,6 +117,13 @@ export function api_signup(name, mail, pass) {
                             debug_log(`api-signup: could not decode json: ${err}`)
                             reject(err);
                         });
+                    return;
+                }
+                if (res.status == 409) {
+                    // Conflict
+                    debug_log(`api-signup: user already registered`);
+                    reject(`api-signup: user already registered`);
+                    return;
                 }
                 debug_log(`api-signup: fetch failed with ${res.status}`);
                 reject(`api-signup: ${res.status}`);
@@ -124,6 +131,53 @@ export function api_signup(name, mail, pass) {
             .catch(err => {
                 debug_log(`api-signup: fetch crashed with ${err}`);
                 reject(`api-signup: fetch crashed with ${err}`);
+            })
+            ;
+    });
+}
+
+export function api_follow(mail) {
+    debug_log(`api-follow: ${mail}`);
+    return new Promise((resolve, reject) => {
+        debug_log(`api-follow: in-promise`);
+        const body = JSON.stringify({
+            user_mail: mail,
+        });
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        const followData = {
+            method: 'POST',
+            cache: 'no-cache',
+            headers: headers,
+            body: body,
+        };
+        const request = fetch(followUrl, followData);
+        request
+            .then(res => {
+                if (res.status >= 200 && res.status < 300) {
+                    res.json()
+                        .then(data => {
+                            debug_log(`api-follow: fetch data`);
+                            resolve(data);
+                        })
+                        .catch(err => {
+                            debug_log(`api-follow: could not decode json: ${err}`)
+                            reject(err);
+                        });
+                    return;
+                }
+                if (res.status == 409) {
+                    // Conflict
+                    debug_log(`api-follow: user already subscribed`);
+                    reject(`api-follow: user already subscribed`);
+                    return;
+                }
+                debug_log(`api-follow: fetch failed with ${res.status}`);
+                reject(`api-follow: ${res.status}`);
+            })
+            .catch(err => {
+                debug_log(`api-follow: fetch crashed with ${err}`);
+                reject(`api-follow: fetch crashed with ${err}`);
             })
             ;
     });

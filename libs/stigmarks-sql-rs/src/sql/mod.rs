@@ -23,9 +23,11 @@
 
 use mysql::{Opts, Pool};
 use mysql::prelude::Queryable;
+use std::sync::Mutex;
 
 pub struct SqlStigmarksDB {
     pool: mysql::Pool,
+    url_mutex: Mutex<u32>,
 }
 
 pub mod collections;
@@ -39,7 +41,7 @@ impl SqlStigmarksDB {
         let url = format!("mysql://{}:{}@localhost:3306/stigmarks", db_name, db_pass);
         let opts = Opts::from_url(url.as_str()).expect("sql: failed get opts from url");
         let pool = Pool::new(opts).expect("sql: could create pool");
-        Self { pool }
+        Self { pool, url_mutex: Mutex::new(0) }
     }
 
     pub fn init(self: &Self) -> Result<(), String> {

@@ -34,6 +34,7 @@ function update_tabs() {
         .then(tabs => {
             stigmark_instance.listEl.innerHTML = '';
             stigmark_instance.selected_only_div.className = 'hidden';
+            stigmark_instance.entries = [];
             tabs.forEach(tab => {
                 debug_log(`tab: "${tab.title}" selected=${tab.highlighted ? 'true' : 'false'}`);
                 if (tab.highlighted === true && tab.active === false) {
