@@ -23,19 +23,55 @@
 
 import { loginUrl, signupUrl, stigmersUrl, stigmarksUrl } from "./config.js";
 import { debug_log } from "./debug.js";
-import { serverAddr, cookieName } from "./config.js";
+import { cookieAddr, cookieName } from "./config.js";
 
-export function is_logged() {
-    debug_log('is_logged');
+export function api_is_logged() {
+    debug_log('api_is_logged');
     return new Promise((resolve, reject) => {
-        chrome.cookies.get({ url: serverAddr, name: cookieName })
-            .then(_ => {
-                debug_log(` # found cookie`);
-                resolve();
+        debug_log(`api-is-logged: in-promise`);
+        const logoutData = {
+            method: 'GET',
+        };
+        debug_log('api-is-logged: sending login request');
+        fetch(loginUrl, logoutData)
+            .then(res => {
+                debug_log(`api-is-logged: fetch returned ${res.status}`);
+                if (res.status >= 200 && res.status < 300) {
+                    resolve();
+                    return true;
+                }
+                debug_log(`api-is-logged: fetch failed`);
+                reject(`api-is-logged: fetch failed`);
             })
-            .catch(_ => {
-                debug_log(` # cookie not found`);
-                reject(err);
+            .catch(err => {
+                debug_log(`api-is-logged: fetch crashed with ${err}`);
+                reject(`api-is-logged: fetch crashed with ${err}`);
+            })
+            ;
+    });
+}
+
+export function api_logout() {
+    debug_log(`api-logout`);
+    return new Promise((resolve, reject) => {
+        debug_log(`api-logout: in-promise`);
+        const logoutData = {
+            method: 'DELETE',
+        };
+        debug_log('api-logout: sending login request');
+        fetch(loginUrl, logoutData)
+            .then(res => {
+                debug_log(`api-logout: fetch returned ${res.status}`);
+                if (res.status >= 200 && res.status < 300) {
+                    resolve();
+                    return true;
+                }
+                debug_log(`api-logout: fetch failed`);
+                reject(`api-logout: fetch failed`);
+            })
+            .catch(err => {
+                debug_log(`api-logout: fetch crashed with ${err}`);
+                reject(`api-logout: fetch crashed with ${err}`);
             })
             ;
     });
@@ -91,12 +127,9 @@ export function api_signup(name, mail, pass) {
             mail: mail,
             pass: pass,
         });
-        const headers = new Headers();
-        headers.append('Content-Type', 'application/json');
         const signupData = {
             method: 'POST',
-            cache: 'no-cache',
-            headers: headers,
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
             body: body,
         };
         const request = fetch(signupUrl, signupData);
@@ -141,9 +174,7 @@ export function api_follow(mail) {
         const followData = {
             method: 'POST',
             cache: 'no-cache',
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8',
-            },
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
             body: body,
         };
         const request = fetch(stigmersUrl, followData);
@@ -190,9 +221,7 @@ export function api_add_collection(urls, keywords) {
         const body = { urls: urls, keys: keywords };
         const requestData = {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8',
-            },
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
             body: JSON.stringify(body),
         };
         fetch(stigmarksUrl, requestData)

@@ -22,8 +22,7 @@
 // 
 
 import { debug_log } from "./debug.js";
-import { api_login } from "./api-stigmark.js";
-import { serverAddr, cookieName } from "./config.js";
+import { api_login, api_is_logged } from "./api-stigmark.js";
 
 let login_instance = null;
 
@@ -105,7 +104,7 @@ export function init_login_page(page_nav, msg_ctrl) {
 
             api_login(mail, pass)
                 .then(_ => {
-                    chrome.cookies.get({ url: serverAddr, name: cookieName })
+                    api_is_logged()
                         .catch(_ => {
                             debug_log(`could not login: cookie not found`);
                             msg_ctrl.alert(`could not login: cookie not found`);

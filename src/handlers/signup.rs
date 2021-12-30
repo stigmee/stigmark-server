@@ -79,7 +79,7 @@ fn signup_post(state: State<SqlStigmarksDB>, mut cookies: Cookies, req: Json<Sig
         .http_only(true)
         .secure(true)
         .finish();
-    cookies.add(cookie);
+    cookies.add_private(cookie);
 
     let json = json!(SignupResult::new(token));
     ServerResponse::json(json, Status::Created)

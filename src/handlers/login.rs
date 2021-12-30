@@ -51,16 +51,56 @@ impl LoginResult {
     }
 }
 
+#[derive(Serialize)]
+struct WhoAmIResult {
+    pub id: u32,
+    pub name: String,
+    pub mail: String,
+    pub is_private: bool,
+    pub is_anonymous: bool,
+}
+
 #[options("/login")]
 fn login_options() ->ServerResponse {
     ServerResponse::ok()
+}
+
+use crate::jwtauth::{JwtAuth, get_current_user};
+
+// GET https://stigmark.stigmee.com/api/v1/login
+#[get("/login", format = "json", rank = 1)]
+fn login_get(
+    jwt_auth: JwtAuth,
+    db_state: State<SqlStigmarksDB>,
+) -> ServerResponse {
+    println!("stigmarks_get: who-am-i");
+
+    let current_user = if let Some(claims) = jwt_auth.claims {
+        get_current_user(&claims, &db_state)
+    } else {
+        None
+    };
+    if let None = current_user {
+        return ServerResponse::error("not logged", Status::Forbidden);
+    }
+
+    let current_user = current_user.unwrap();
+    let whoami = WhoAmIResult {
+        id: current_user.id,
+        name: current_user.name,
+        mail: current_user.email,
+        is_private: current_user.is_private,
+        is_anonymous: current_user.is_anonymous,
+    };
+    ServerResponse::json(json!(whoami), Status::Ok)
 }
 
 use std::str;
 
 #[post("/login", format = "json", data = "<req>")]
 fn login_post(state: State<SqlStigmarksDB>, mut cookies: Cookies, req: Json<LoginRequest>) -> ServerResponse {
-    println!("login: user '{}' pass '{}'", &req.mail, &req.pass);
+    println!("login: user '{}' pass '****'", &req.mail);
+
     if req.mail == "" || req.pass == "" {
         eprintln!("login: invalid parameters");
         return ServerResponse::error("invalid parameters", Status::BadRequest);
@@ -92,12 +132,20 @@ fn login_post(state: State<SqlStigmarksDB>, mut cookies: Cookies, req: Json<Logi
 }
 
 #[delete("/login")]
-fn login_delete(mut cookies: Cookies) -> ServerResponse {
-    let cookie = Cookie::build(COOKIE_NAME, "").finish();
+fn login_delete(mut cookies: Cookies) {
+    println!("logout");
+
+    let cookie = Cookie::build(COOKIE_NAME, "")
+        .path("/")
+        .same_site(SameSite::Strict)
+        .http_only(true)
+        .secure(true)
+        .finish();
     cookies.remove(cookie);
-    ServerResponse::error("", Status::NoContent)
+
+    // ServerResponse::error("", Status::NoContent)
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![login_options, login_post, login_delete]
+    routes![login_options, login_get, login_post, login_delete]
 }

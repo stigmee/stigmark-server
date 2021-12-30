@@ -17,7 +17,7 @@
         "cookies"
     ],
     "host_permissions": [
-        "http://localhost:8000/",
+        "http://localhost/",
         "https://*.stigmee.fr/"
     ]
 }

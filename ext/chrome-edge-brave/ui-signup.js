@@ -21,9 +21,8 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // 
 
-import { api_signup } from "./api-stigmark.js";
 import { debug_log } from "./debug.js";
-import { storgage_set } from "./chrome-ext.js";
+import { api_signup, api_is_logged } from "./api-stigmark.js";
 
 let signup_instance = null;
 
@@ -125,7 +124,7 @@ export function init_signup_page(page_nav, msg_ctrl) {
             }
             api_signup(name, mail, pass1)
                 .then(_ => {
-                    chrome.cookies.get({ url: serverAddr, name: cookieName })
+                    api_is_logged()
                         .catch(_ => {
                             debug_log(`could not signup: cookie not found`);
                             msg_ctrl.alert(`could not signup: cookie not found`);
