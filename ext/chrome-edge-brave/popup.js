@@ -72,6 +72,9 @@ window.addEventListener('load', () => {
     }
     if (nav_ctrl.add_button('logout', evt => {
         evt.preventDefault();
+        // TODO: api_logout
+        
+        /*
         storage_remove('token')
             .then(_ => {
                 nav_ctrl.switch_to('login');
@@ -80,6 +83,7 @@ window.addEventListener('load', () => {
             .catch(err => {
                 debug_log(`could not logout: ${err}`);
             });
+        */
     }) == false) {
         msg_ctrl.alert('could not initialize button "logout"');
         return;
@@ -87,10 +91,12 @@ window.addEventListener('load', () => {
 
     debug_log('testing if already logged');
     is_logged()
-        .then(token => {
-            nav_ctrl.switch_to('stigmark', token);
+        .then(_ => {
+            debug_log('logged: switch to stigmark');
+            nav_ctrl.switch_to('stigmark');
         })
         .catch(_ => {
+            debug_log('not-logged: switch to login');
             nav_ctrl.switch_to('login');
         })
         ;

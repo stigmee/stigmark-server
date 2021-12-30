@@ -22,13 +22,14 @@
 // 
 
 use serde::{Deserialize, Serialize};
-use rocket::http::{Status};
+use rocket::http::{Status, Cookie, Cookies, SameSite};
 use rocket_contrib::json::Json;
 use rocket::{State, Route};
 use rocket_contrib::json;
 use crate::response::ServerResponse;
 use crate::token::{create_token};
 use stigmarks_sql_rs::sql::{SqlStigmarksDB, users::Role};
+use crate::config::COOKIE_NAME;
 
 #[derive(Deserialize)]
 struct SignupRequest {
@@ -57,7 +58,7 @@ fn signup_options() ->ServerResponse {
 }
 
 #[post("/signup", format = "json", data = "<req>")]
-fn signup_post(state: State<SqlStigmarksDB>, req: Json<SignupRequest>) -> ServerResponse {
+fn signup_post(state: State<SqlStigmarksDB>, mut cookies: Cookies, req: Json<SignupRequest>) -> ServerResponse {
     println!("signup: user '{}' pass '{}'", &req.mail, &req.pass);
     let passwd = &req.pass;
     let hash = bcrypt::hash(passwd, 6).unwrap();
@@ -71,6 +72,15 @@ fn signup_post(state: State<SqlStigmarksDB>, req: Json<SignupRequest>) -> Server
         return ServerResponse::error(err, Status::InternalServerError);
     }
     let token = create_token(res.unwrap()).unwrap();
+
+    let cookie = Cookie::build(COOKIE_NAME, token.clone())
+        .path("/")
+        .same_site(SameSite::Strict)
+        .http_only(true)
+        .secure(true)
+        .finish();
+    cookies.add(cookie);
+
     let json = json!(SignupResult::new(token));
     ServerResponse::json(json, Status::Created)
 }

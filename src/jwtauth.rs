@@ -25,6 +25,7 @@ use rocket::request::{FromRequest, Outcome};
 use rocket::Request;
 
 use crate::token::Claims;
+use crate::config::COOKIE_NAME;
 
 #[allow(dead_code)]
 pub struct JwtAuth {
@@ -72,7 +73,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for JwtAuth {
 
         // can be provided through cookie
         let cookies = request.cookies();
-        if let Some(cookie) = cookies.get("stigmark") {
+        if let Some(cookie) = cookies.get(COOKIE_NAME) {
             token = cookie.value();
             println!("got token by cookie: {}", token);
         }
@@ -114,4 +115,26 @@ impl<'a, 'r> FromRequest<'a, 'r> for JwtAuth {
         println!("could not get token_info");
         return Outcome::Failure((Status::BadRequest, LoginError::InvalidToken));
     }
+}
+
+use rocket::State;
+use stigmarks_sql_rs::sql::SqlStigmarksDB;
+use stigmarks_sql_rs::sql::users::SqlUser;
+
+pub fn get_current_user(
+    claims: &Claims,
+    db_state: &State<SqlStigmarksDB>,
+) -> Option<SqlUser> {
+    let user_id = claims.uid;
+    let stigmarks_db = db_state.inner();
+    let user = stigmarks_db.get_user_by_id(user_id);
+    if let Err(err) = user {
+        println!("could not find user: {}", err);
+        return None;
+    }
+    let user = user.unwrap();
+    if let Some(_) = user.disabled_at {
+        return None;
+    }
+    Some(user)
 }

@@ -29,7 +29,7 @@ window.addEventListener('load', evt => {
                 }
                 response.json()
                     .then(json => {
-                        document.cookie = `stigmark=${json.token}; expires=Fri, 31 Dec 9999 23:59:59 GMT; SameSite=None; Secure`;
+                        // document.cookie = `stigmark=${json.token}; expires=Fri, 31 Dec 9999 23:59:59 GMT; SameSite=None; Secure`;
                         // window.location.href = `/search.htm?token=${json.token}`;
                         window.location.href = `/search.htm`;
                     })

@@ -22,13 +22,14 @@
 // 
 
 use serde::{Deserialize, Serialize};
-use rocket::http::{Status};
+use rocket::http::{Status, Cookie, Cookies, SameSite};
 use rocket_contrib::json::Json;
 use rocket::{State, Route};
 use rocket_contrib::json;
 use crate::response::ServerResponse;
 use crate::token::create_token;
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
+use crate::config::COOKIE_NAME;
 
 #[derive(Deserialize)]
 struct LoginRequest {
@@ -58,7 +59,7 @@ fn login_options() ->ServerResponse {
 use std::str;
 
 #[post("/login", format = "json", data = "<req>")]
-fn login_post(state: State<SqlStigmarksDB>, req: Json<LoginRequest>) -> ServerResponse {
+fn login_post(state: State<SqlStigmarksDB>, mut cookies: Cookies, req: Json<LoginRequest>) -> ServerResponse {
     println!("login: user '{}' pass '{}'", &req.mail, &req.pass);
     if req.mail == "" || req.pass == "" {
         eprintln!("login: invalid parameters");
@@ -77,10 +78,26 @@ fn login_post(state: State<SqlStigmarksDB>, req: Json<LoginRequest>) -> ServerRe
         return ServerResponse::error("invalid user/pass combination", Status::Unauthorized);
     }
     let token = create_token(user.id).unwrap();
+
+    let cookie = Cookie::build(COOKIE_NAME, token.clone())
+        .path("/")
+        .same_site(SameSite::Strict)
+        .http_only(true)
+        .secure(true)
+        .finish();
+    cookies.add(cookie);
+
     let json = json!(LoginResult::new(token));
     ServerResponse::json(json, Status::Created)
 }
 
+#[delete("/login")]
+fn login_delete(mut cookies: Cookies) -> ServerResponse {
+    let cookie = Cookie::build(COOKIE_NAME, "").finish();
+    cookies.remove(cookie);
+    ServerResponse::error("", Status::NoContent)
+}
+
 pub fn routes() -> Vec<Route> {
-    routes![login_options, login_post]
+    routes![login_options, login_post, login_delete]
 }

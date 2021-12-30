@@ -30,25 +30,22 @@ use rocket::fairing::AdHoc;
 
 // stigmark stuff
 mod basicauth;
-mod cors;
-mod files;
-mod followers;
 mod jwtauth;
-mod login;
+mod cors;
 mod response;
-mod signup;
-mod stigmarks;
-mod stigmers;
 mod token;
+mod config;
+mod handlers;
+
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
-use files::FileState;
+use handlers::files::FileState;
 
 fn main() {
-    let mut api_routes = stigmarks::routes();
-    api_routes.append(&mut login::routes());
-    api_routes.append(&mut signup::routes());
-    api_routes.append(&mut stigmers::routes());
-    api_routes.append(&mut followers::routes());
+    let mut api_routes = handlers::stigmarks::routes();
+    api_routes.append(&mut handlers::login::routes());
+    api_routes.append(&mut handlers::signup::routes());
+    api_routes.append(&mut handlers::stigmers::routes());
+    api_routes.append(&mut handlers::followers::routes());
 
     rocket::ignite()
         .attach(CORS)
@@ -93,7 +90,7 @@ fn main() {
             println!("stigmarks db inited");
             Ok(rocket.manage(stigmarks_db))
         }))
-        .mount("/", files::routes())
+        .mount("/", handlers::files::routes())
         .mount("/api/v1", api_routes)
         .launch();
 }

@@ -46,11 +46,11 @@ fn search_options() -> ServerResponse {
 use stigmarks_sql_rs::sql::SqlStigmarksDB;
 
 // GET https://stigmark.stigmee.com/api/v1/search
-#[get("/search", format = "json", data = "<mark>", rank = 1)]
+#[get("/search?<q>", rank = 1)]
 fn search_post(
     auth: JwtAuth,
     state: State<SqlStigmarksDB>,
-    mark: Json<SearchRequest>,
+    q: Option<u32>,
 ) -> ServerResponse {
     let mut user_id = 0u32;
     if let Some(claims) = auth.claims {

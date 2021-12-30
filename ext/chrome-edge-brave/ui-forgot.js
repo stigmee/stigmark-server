@@ -67,26 +67,6 @@ export function init_forgot_page(page_nav, msg_ctrl) {
             debug_log('clicked recover button');
             evt.preventDefault();
             msg_ctrl.alert(`recover not implemented yet`);
-            /*
-            msg_ctrl.close();
-            const token = api_login(instance.mailInputEl.value, instance.passInputEl.value)
-                .then(data => {
-                    debug_log(`logged with token ${data.token}`);
-                    storgage_set({ token: data.token })
-                        .catch(err => {
-                            debug_log(`could update token ${err}`);
-                            msg_ctrl.alert(`could update token`);
-                        })
-                        .then(_ => {
-                            page_nav.switch_to('stigmark');
-                        })
-                })
-                .catch(err => {
-                    // handle error
-                    debug_log(`could not login: ${err}`);
-                    msg_ctrl.alert(`could not login`);
-                });
-            */
         });
 
         debug_log(instance);

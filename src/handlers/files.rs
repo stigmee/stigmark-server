@@ -28,6 +28,9 @@ use crate::response::ServerResponse;
 use crate::basicauth::BasicAuth;
 use rocket::State;
 
+use crate::jwtauth::{JwtAuth, get_current_user};
+use stigmarks_sql_rs::sql::SqlStigmarksDB;
+
 pub struct FileState {
     user: String,
     pass: String,
@@ -46,13 +49,22 @@ impl FileState {
 
 // GET https://stigmark.stigmee.com/
 #[get("/", rank = 2)]
-fn files_slash(auth: BasicAuth, state: State<FileState>) -> ServerResponse {
-    println!("stigmarks: '{}' GET /", auth.name);
-    let state = state.inner();
-    if auth.name != state.user || auth.pass != state.pass {
-        return ServerResponse::basic_auth()
+fn files_slash(basic_auth: BasicAuth, jwt_auth: JwtAuth, file_state: State<FileState>, db_state: State<SqlStigmarksDB>) -> ServerResponse {
+    println!("stigmarks: GET /");
+
+    let current_user = if let Some(claims) = jwt_auth.claims {
+        get_current_user(&claims, &db_state)
+    } else {
+        None
+    };
+    if let None = current_user {
+        let file_state = file_state.inner();
+        if basic_auth.name != file_state.user || basic_auth.pass != file_state.pass {
+            return ServerResponse::basic_auth()
+        }
     }
-    let www_path = Path::new(&state.www_dir);
+
+    let www_path = Path::new(&file_state.www_dir);
     let path = www_path.join("index.htm");
     println!("stigmarks: www-path={:?} file-path={:?}", www_path, path);
     ServerResponse::file(&path)
@@ -60,13 +72,22 @@ fn files_slash(auth: BasicAuth, state: State<FileState>) -> ServerResponse {
 
 // GET https://stigmark.stigmee.com/*
 #[get("/<file..>", rank = 3)]
-fn files_others(auth: BasicAuth, state: State<FileState>, file: PathBuf) -> ServerResponse {
-    println!("stigmarks: '{}' GET {:?}", auth.name, file);
-    let state = state.inner();
-    if auth.name != state.user || auth.pass != state.pass {
-        return ServerResponse::basic_auth()
+fn files_others(basic_auth: BasicAuth, jwt_auth: JwtAuth, file_state: State<FileState>, db_state: State<SqlStigmarksDB>, file: PathBuf) -> ServerResponse {
+    println!("stigmarks: GET {:?}", file);
+
+    let current_user = if let Some(claims) = jwt_auth.claims {
+        get_current_user(&claims, &db_state)
+    } else {
+        None
+    };
+    if let None = current_user {
+        let file_state = file_state.inner();
+        if basic_auth.name != file_state.user || basic_auth.pass != file_state.pass {
+            return ServerResponse::basic_auth()
+        }
     }
-    let www_path = Path::new(&state.www_dir);
+
+    let www_path = Path::new(&file_state.www_dir);
     let path = www_path.join(file);
     println!("stigmarks: www-path={:?} file-path={:?}", www_path, path);
     ServerResponse::file(&path)

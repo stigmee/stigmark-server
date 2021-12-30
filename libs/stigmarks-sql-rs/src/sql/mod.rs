@@ -32,6 +32,7 @@ pub struct SqlStigmarksDB {
 
 pub mod collections;
 pub mod users;
+pub mod followers;
 pub mod events;
 pub mod scoring;
 

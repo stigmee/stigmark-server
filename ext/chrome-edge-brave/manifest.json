@@ -14,6 +14,10 @@
     },
     "permissions": [
         "tabs",
-        "storage"
+        "cookies"
+    ],
+    "host_permissions": [
+        "http://localhost:8000/",
+        "https://*.stigmee.fr/"
     ]
 }

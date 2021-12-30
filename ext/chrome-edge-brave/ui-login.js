@@ -23,7 +23,7 @@
 
 import { debug_log } from "./debug.js";
 import { api_login } from "./api-stigmark.js";
-import { storgage_set } from "./chrome-ext.js";
+import { serverAddr, cookieName } from "./config.js";
 
 let login_instance = null;
 
@@ -104,12 +104,11 @@ export function init_login_page(page_nav, msg_ctrl) {
             }
 
             api_login(mail, pass)
-                .then(data => {
-                    debug_log(`logged with token ${data.token}`);
-                    storgage_set({ token: data.token })
-                        .catch(err => {
-                            debug_log(`could not update token: ${err}`);
-                            msg_ctrl.alert(`could not update token`);
+                .then(_ => {
+                    chrome.cookies.get({ url: serverAddr, name: cookieName })
+                        .catch(_ => {
+                            debug_log(`could not login: cookie not found`);
+                            msg_ctrl.alert(`could not login: cookie not found`);
                         })
                         .then(_ => {
                             page_nav.switch_to('stigmark');
@@ -118,7 +117,7 @@ export function init_login_page(page_nav, msg_ctrl) {
                 .catch(err => {
                     // handle error
                     debug_log(`could not login: ${err}`);
-                    msg_ctrl.alert(`could not login`);
+                    msg_ctrl.alert(`could not login: ${err}`);
                 });
         });
 

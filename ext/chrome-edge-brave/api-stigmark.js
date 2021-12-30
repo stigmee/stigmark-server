@@ -21,25 +21,20 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // 
 
-import { loginUrl, signupUrl, followUrl } from "./urls.js";
+import { loginUrl, signupUrl, stigmersUrl, stigmarksUrl } from "./config.js";
 import { debug_log } from "./debug.js";
+import { serverAddr, cookieName } from "./config.js";
 
 export function is_logged() {
     debug_log('is_logged');
     return new Promise((resolve, reject) => {
-        chrome.storage.local.get('token')
-            .then(res => {
-                debug_log(res);
-                if (typeof res.token !== "string" || res.token === "") {
-                    debug_log(` # invalid storage data`);
-                    reject('not logged');
-                    return;
-                }
-                debug_log(`logged with token ${res.token}`);
-                resolve(res.token);
+        chrome.cookies.get({ url: serverAddr, name: cookieName })
+            .then(_ => {
+                debug_log(` # found cookie`);
+                resolve();
             })
-            .catch(err => {
-                debug_log(` # storage data not found ${err}`);
+            .catch(_ => {
+                debug_log(` # cookie not found`);
                 reject(err);
             })
             ;
@@ -122,7 +117,7 @@ export function api_signup(name, mail, pass) {
                 if (res.status == 409) {
                     // Conflict
                     debug_log(`api-signup: user already registered`);
-                    reject(`api-signup: user already registered`);
+                    reject(`already registered`);
                     return;
                 }
                 debug_log(`api-signup: fetch failed with ${res.status}`);
@@ -143,15 +138,15 @@ export function api_follow(mail) {
         const body = JSON.stringify({
             user_mail: mail,
         });
-        const headers = new Headers();
-        headers.append('Content-Type', 'application/json');
         const followData = {
             method: 'POST',
             cache: 'no-cache',
-            headers: headers,
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+            },
             body: body,
         };
-        const request = fetch(followUrl, followData);
+        const request = fetch(stigmersUrl, followData);
         request
             .then(res => {
                 if (res.status >= 200 && res.status < 300) {
@@ -166,10 +161,16 @@ export function api_follow(mail) {
                         });
                     return;
                 }
+                if (res.status == 404) {
+                    // Conflict
+                    debug_log(`api-follow: user already subscribed`);
+                    reject(`stigmer not found`);
+                    return;
+                }
                 if (res.status == 409) {
                     // Conflict
                     debug_log(`api-follow: user already subscribed`);
-                    reject(`api-follow: user already subscribed`);
+                    reject(`already subscribed`);
                     return;
                 }
                 debug_log(`api-follow: fetch failed with ${res.status}`);
@@ -178,6 +179,40 @@ export function api_follow(mail) {
             .catch(err => {
                 debug_log(`api-follow: fetch crashed with ${err}`);
                 reject(`api-follow: fetch crashed with ${err}`);
+            })
+            ;
+    });
+}
+
+export function api_add_collection(urls, keywords) {
+    debug_log(`sending urls=${JSON.stringify(urls)} and keywords=${JSON.stringify(keywords)}`);
+    return new Promise((resolve, reject) => {
+        const body = { urls: urls, keys: keywords };
+        const requestData = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+            },
+            body: JSON.stringify(body),
+        };
+        fetch(stigmarksUrl, requestData)
+            .then(res => {
+                if (res.status >= 200 && res.status < 300) {
+                    res.json()
+                        .then(data => {
+                            debug_log(data);
+                            // add_bookmarks(urls, keywords);
+                        })
+                        .catch(err => {
+                            debug_log(`could not decode json: ${err}`);
+                        })
+                        ;
+                }
+                resolve(res.status);
+            })
+            .catch(exc => {
+                debug_log(`urls+keys failed with exception ${exc.message}`);
+                reject(exc.message);
             })
             ;
     });

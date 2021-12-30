@@ -4,3 +4,4 @@ Cargo.lock
 /data*
 Rocket.toml
 .sass-cache/
+/*.xz

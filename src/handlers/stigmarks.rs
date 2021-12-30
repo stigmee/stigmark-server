@@ -21,7 +21,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-use crate::jwtauth::JwtAuth;
+use crate::jwtauth::{JwtAuth, get_current_user};
 use crate::response::ServerResponse;
 use rocket::http::Status;
 use rocket::{Route, State};
@@ -35,14 +35,7 @@ use stigmarks_sql_rs::sql::SqlStigmarksDB;
 struct StigmarkRequest {
     urls: Vec<String>,
     keys: Vec<String>,
-    token: Option<String>,
 }
-
-// pub struct StigmarkData {
-//     pub user: u32,
-//     pub urls: Vec<String>,
-//     pub keys: Vec<String>,
-// }
 
 // OPTIONS https://stigmark.stigmee.com/api/v1/stigmarks
 #[options("/stigmarks", rank = 1)]
@@ -51,41 +44,38 @@ fn stigmarks_options() -> ServerResponse {
 }
 
 // POST https://stigmark.stigmee.com/api/v1/stigmarks
-#[post("/stigmarks", format = "json", data = "<mark>", rank = 1)]
+#[post("/stigmarks", format = "json", data = "<add_collection_request>", rank = 1)]
 fn stigmarks_post(
-    auth: JwtAuth,
-    state: State<SqlStigmarksDB>,
-    mark: Json<StigmarkRequest>,
+    jwt_auth: JwtAuth,
+    db_state: State<SqlStigmarksDB>,
+    add_collection_request: Json<StigmarkRequest>,
 ) -> ServerResponse {
-    let mut user_id = 0u32;
-    if let Some(claims) = auth.claims {
-        user_id = claims.uid;
+    println!("stigmarks_post: add_collection");
+
+    let current_user = if let Some(claims) = jwt_auth.claims {
+        get_current_user(&claims, &db_state)
+    } else {
+        None
+    };
+    if let None = current_user {
+        return ServerResponse::error("not logged", Status::Forbidden);
     }
-    // We might need token from body
-    if user_id > 0 {
-        if let Some(token) = &mark.token {
-            if let Some(auth) = JwtAuth::new(token) {
-                if let Some(claims) = auth.claims {
-                    user_id = claims.uid;
-                }
-            }
-        }
-    }
-    if user_id == 0 {
-        println!("access denied");
-        return ServerResponse::error("expected token", Status::Forbidden);
-    }
-    let stigmarks_db = state.inner();
-    if let Err(err) = stigmarks_db.get_user_by_id(user_id) {
+    let current_user = current_user.unwrap();
+    let current_user_id = current_user.id;
+ 
+    let stigmarks_db = db_state.inner();
+    if let Err(err) = stigmarks_db.get_user_by_id(current_user_id) {
         println!("could not find user: {}", err);
         return ServerResponse::error("user not found", Status::Forbidden);
     }
-    // todo: check if user is still active
-    let res = stigmarks_db.add_collection(user_id, &mark.keys, &mark.urls);
+
+    let res = stigmarks_db.add_collection(
+        current_user_id, &add_collection_request.keys, &add_collection_request.urls);
     if let Err(err) = res {
         eprintln!("add collection failed with: {}", err);
         return ServerResponse::error(err, Status::InternalServerError);
     }
+
     ServerResponse::json(json!({"collection_id": res.unwrap()}), Status::Created)
 }
 
@@ -100,43 +90,40 @@ struct StigmarkResponsePublic {
 }
 
 // GET https://stigmark.stigmee.com/api/v1/stigmarks
-#[get("/stigmarks?<from>", rank = 1)]
+#[get("/stigmarks?<optional_user_id>", rank = 1)]
 fn stigmarks_get(
-    auth: JwtAuth,
-    state: State<SqlStigmarksDB>,
-    from: Option<u32>,
+    jwt_auth: JwtAuth,
+    db_state: State<SqlStigmarksDB>,
+    optional_user_id: Option<u32>,
 ) -> ServerResponse {
-    let mut user_id = 0u32;
-    if let Some(claims) = auth.claims {
-        user_id = claims.uid;
-    }
-    if user_id == 0 {
-        println!("access denied");
-        return ServerResponse::error("expected token", Status::Forbidden);
-    }
+    println!("stigmarks_get: get_all_collection");
+
     let mut stigmer_id = 0;
-    if let Some(from_user_id) = from {
+    if let Some(from_user_id) = optional_user_id {
         stigmer_id = from_user_id;
     }
-    let stigmarks_db = state.inner();
-    let user = stigmarks_db.get_user_by_id(user_id);
-    if let Err(err) = user {
-        println!("could not find user: {}", err);
-        return ServerResponse::error("user not found", Status::Forbidden);
+
+    let current_user = if let Some(claims) = jwt_auth.claims {
+        get_current_user(&claims, &db_state)
+    } else {
+        None
+    };
+    if let None = current_user {
+        return ServerResponse::error("not logged", Status::Forbidden);
     }
-    let user = user.unwrap();
-    if let Some(disabled_at) = user.disabled_at {
-        println!("user {} disabled at {}", user_id, disabled_at);
-        return ServerResponse::error("user not found", Status::Forbidden);
-    }
+    let current_user = current_user.unwrap();
+    let current_user_id = current_user.id;
+ 
     // todo: check we are follower of this user
-    println!("get_all_collection: user_id={} stigmer_id={}", user_id, stigmer_id);
-    let res = stigmarks_db.get_all_collections_from_user(user_id, stigmer_id);
-    if let Err(err) = res {
+    println!("get_all_collection: user_id={} stigmer_id={}", current_user_id, stigmer_id);
+
+    let stigmarks_db = db_state.inner();
+    let collections = stigmarks_db.get_all_collections_from_user(current_user_id, stigmer_id);
+    if let Err(err) = collections {
         eprintln!("add collection failed with: {}", err);
         return ServerResponse::error(err, Status::InternalServerError);
     }
-    let collections = res
+    let collections = collections
         .unwrap()
         .iter()
         .map(|c| {
@@ -157,6 +144,7 @@ fn stigmarks_get(
             }
         })
         .collect::<Vec<_>>();
+
     ServerResponse::json(json!(collections), Status::Ok)
 }
 

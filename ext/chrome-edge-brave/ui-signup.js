@@ -124,12 +124,11 @@ export function init_signup_page(page_nav, msg_ctrl) {
                 return;
             }
             api_signup(name, mail, pass1)
-                .then(data => {
-                    debug_log(`logged with token ${data.token}`);
-                    storgage_set({ token: data.token })
-                        .catch(err => {
-                            debug_log(`could not update token ${err}`);
-                            msg_ctrl.alert(`could not update token`);
+                .then(_ => {
+                    chrome.cookies.get({ url: serverAddr, name: cookieName })
+                        .catch(_ => {
+                            debug_log(`could not signup: cookie not found`);
+                            msg_ctrl.alert(`could not signup: cookie not found`);
                         })
                         .then(_ => {
                             page_nav.switch_to('stigmark');

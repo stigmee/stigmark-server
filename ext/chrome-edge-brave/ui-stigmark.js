@@ -21,10 +21,9 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // 
 
-import { debug_log } from "./debug.js";
 import { get_all_tabs } from "./chrome-ext.js";
-import { api_send_urls_and_keywords } from "./stigmark.js";
-import { is_logged } from "./api-stigmark.js";
+import { is_logged, api_add_collection } from "./api-stigmark.js";
+import { debug_log } from "./debug.js";
 
 let stigmark_instance = null;
 
@@ -128,8 +127,9 @@ export function init_stigmark_page(page_nav, msg_ctrl) {
 
             const keywords = instance.keywordsEl.value.split(/[ \t]*,[ \t]*/g)
             is_logged()
-                .then(token => {
-                    api_send_urls_and_keywords(token, urls, keywords)
+                .then(_ => {
+                    debug_log('logged: call api_add_collection');
+                    api_add_collection(urls, keywords)
                         .then(status => {
                             if (status >= 200 && status < 300) {
                                 msg_ctrl.info('collection added');
@@ -156,7 +156,7 @@ export function init_stigmark_page(page_nav, msg_ctrl) {
 
     debug_log('returning "stigmark" controler');
     return {
-        show: function (token) {
+        show: function () {
             debug_log('showing "stigmark" page');
             msg_ctrl.close();
             update_tabs();

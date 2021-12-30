@@ -21,7 +21,7 @@ window.addEventListener('load', evt => {
 
     function update_collections() {
         const headers = new Headers();
-        // headers.append('Authorization', `Bearer ${token}`);
+
         headers.append('Content-Type', 'application/json');
         const request = fetch('/api/v1/stigmarks',
             {
