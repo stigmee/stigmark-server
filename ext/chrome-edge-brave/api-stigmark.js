@@ -25,27 +25,22 @@ import { loginUrl, signupUrl, stigmersUrl, stigmarksUrl } from "./config.js";
 import { debug_log } from "./debug.js";
 import { cookieAddr, cookieName } from "./config.js";
 
-export function api_is_logged() {
-    debug_log('api_is_logged');
+export function is_logged() {
+    debug_log('is_logged');
     return new Promise((resolve, reject) => {
-        debug_log(`api-is-logged: in-promise`);
-        const logoutData = {
-            method: 'GET',
-        };
-        debug_log('api-is-logged: sending login request');
-        fetch(loginUrl, logoutData)
-            .then(res => {
-                debug_log(`api-is-logged: fetch returned ${res.status}`);
-                if (res.status >= 200 && res.status < 300) {
-                    resolve();
-                    return true;
+        chrome.cookies.get({ url: cookieAddr, name: cookieName })
+            .then(value => {
+                debug_log(` # found cookie ${value}`);
+                if (!value) {
+                    debug_log(` # cookie is null`);
+                    reject("cookie is null");
+                    return;
                 }
-                debug_log(`api-is-logged: fetch failed`);
-                reject(`api-is-logged: fetch failed`);
+                resolve();
             })
             .catch(err => {
-                debug_log(`api-is-logged: fetch crashed with ${err}`);
-                reject(`api-is-logged: fetch crashed with ${err}`);
+                debug_log(` # cookie not found: ${err}`);
+                reject("cookie not found");
             })
             ;
     });

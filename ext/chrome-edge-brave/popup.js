@@ -30,7 +30,7 @@ import { init_navtab } from "./ui-navtab.js";
 import { init_stigmark_page } from "./ui-stigmark.js";
 import { init_follow_page } from "./ui-follow.js";
 import { init_search_page } from "./ui-search.js";
-import { api_logout, api_is_logged } from "./api-stigmark.js";
+import { api_logout, is_logged } from "./api-stigmark.js";
 
 window.addEventListener('load', () => {
     debug_log('window loaded');
@@ -86,7 +86,7 @@ window.addEventListener('load', () => {
     }
 
     debug_log('testing if already logged');
-    api_is_logged()
+    is_logged()
         .then(_ => {
             debug_log('logged: switch to stigmark');
             nav_ctrl.switch_to('stigmark');

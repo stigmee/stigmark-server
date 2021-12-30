@@ -22,7 +22,7 @@
 // 
 
 import { get_all_tabs } from "./chrome-ext.js";
-import { api_is_logged, api_add_collection } from "./api-stigmark.js";
+import { is_logged, api_add_collection } from "./api-stigmark.js";
 import { debug_log } from "./debug.js";
 
 let stigmark_instance = null;
@@ -126,7 +126,7 @@ export function init_stigmark_page(page_nav, msg_ctrl) {
             });
 
             const keywords = instance.keywordsEl.value.split(/[ \t]*,[ \t]*/g)
-            api_is_logged()
+            is_logged()
                 .then(_ => {
                     debug_log('logged: call api_add_collection');
                     api_add_collection(urls, keywords)

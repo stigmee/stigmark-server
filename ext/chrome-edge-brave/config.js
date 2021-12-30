@@ -5,5 +5,5 @@ export const signupUrl = `${serverAddr}/api/v1/signup`;
 export const stigmersUrl = `${serverAddr}/api/v1/stigmers`;
 export const stigmarksUrl = `${serverAddr}/api/v1/stigmarks`;
 
-export const cookieName = 'stigmark-sesssion';
-export const cookieAddr = 'http://localhost';
+export const cookieName = 'stigmark-session';
+export const cookieAddr = serverAddr; // 'http://localhost';

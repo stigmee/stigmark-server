@@ -21,7 +21,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // 
 
-import { api_is_logged, api_follow } from "./api-stigmark.js";
+import { is_logged, api_follow } from "./api-stigmark.js";
 import { debug_log } from "./debug.js";
 
 let follow_instance = null;
@@ -67,7 +67,7 @@ export function init_follow_page(page_nav, msg_ctrl) {
                 return;
             }
 
-            api_is_logged()
+            is_logged()
                 .then(_ => {
                     debug_log('logged: call api_follow');
                     api_follow(mail)

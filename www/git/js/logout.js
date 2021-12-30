@@ -6,7 +6,7 @@ window.addEventListener('load', _ => {
         .then(res => {
             console.log(`DELETE /api/v1/login returned ${res.status}`);
             if (res.status >= 200 && res.status < 300) {
-                window.location.href = `/login.htm`;
+                window.location.href = `/`;
                 return;
             }
             alert(`failed to logout with ${res.status}`);

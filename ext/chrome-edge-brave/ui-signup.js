@@ -22,7 +22,7 @@
 // 
 
 import { debug_log } from "./debug.js";
-import { api_signup, api_is_logged } from "./api-stigmark.js";
+import { api_signup, is_logged } from "./api-stigmark.js";
 
 let signup_instance = null;
 
@@ -124,7 +124,7 @@ export function init_signup_page(page_nav, msg_ctrl) {
             }
             api_signup(name, mail, pass1)
                 .then(_ => {
-                    api_is_logged()
+                    is_logged()
                         .catch(_ => {
                             debug_log(`could not signup: cookie not found`);
                             msg_ctrl.alert(`could not signup: cookie not found`);
