@@ -69,7 +69,7 @@ export function init_forgot_page(page_nav, msg_ctrl) {
             msg_ctrl.alert(`recover not implemented yet`);
         });
 
-        debug_log(instance);
+        // debug_log(instance);
         forgot_instance = instance;
     }
 

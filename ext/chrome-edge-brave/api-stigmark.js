@@ -224,7 +224,8 @@ export function api_add_collection(urls, keywords) {
                 if (res.status >= 200 && res.status < 300) {
                     res.json()
                         .then(data => {
-                            debug_log(data);
+                            // debug_log(data);
+                            debug_log("api_add_collection success");
                             // add_bookmarks(urls, keywords);
                         })
                         .catch(err => {

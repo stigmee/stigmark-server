@@ -120,7 +120,7 @@ export function init_login_page(page_nav, msg_ctrl) {
                 });
         });
 
-        debug_log(instance);
+        // debug_log(instance);
         login_instance = instance;
     }
 
