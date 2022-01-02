@@ -1,6 +1,6 @@
 // 
 //  Stigmee: A 3D browser and decentralized social network.
-//  Copyright 2021 Philippe Anel <zexigh@gmail.com>
+//  Copyright 2021-2022 Philippe Anel <zexigh@gmail.com>
 // 
 //  This file is part of Stigmee.
 // 
