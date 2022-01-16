@@ -67,6 +67,7 @@ pub struct SqlCollectionByKeywordUrlEntry {
 #[derive(Serialize)]
 pub struct SqlCollectionByKeywordResponse {
     pub collection_id: u32,
+    pub keyword_id: u32,
     pub urls: Vec<SqlCollectionByKeywordUrlEntry>,
 }
 
@@ -437,6 +438,7 @@ impl SqlStigmarksDB {
                                     Ok(urls) => {
                                         response.push(SqlCollectionByKeywordResponse{
                                             collection_id,
+                                            keyword_id,
                                             urls,
                                         });
                                     },
