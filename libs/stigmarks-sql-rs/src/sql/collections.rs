@@ -408,7 +408,7 @@ impl SqlStigmarksDB {
 
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_map(
-            r"SELECT id FROM keywords WHERE keywords.keyword=:keyword",
+            r"SELECT id FROM keywords WHERE LOWER(keywords.keyword)=LOWER(:keyword)",
             params! {
                 "keyword" => keyword,
             },
