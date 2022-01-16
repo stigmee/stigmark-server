@@ -46,6 +46,7 @@ fn main() {
     api_routes.append(&mut handlers::signup::routes());
     api_routes.append(&mut handlers::stigmers::routes());
     api_routes.append(&mut handlers::followers::routes());
+    api_routes.append(&mut handlers::search::routes());
 
     rocket::ignite()
         .attach(CORS)

@@ -27,6 +27,8 @@ use mysql::params;
 use mysql::prelude::Queryable;
 use serde::Serialize;
 
+pub type Error = String;
+
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct SqlCollection {
     pub id: u32,
@@ -56,9 +58,21 @@ pub struct SqlCollectionPublic {
 //     url: String,
 // }
 
+#[derive(Serialize)]
+pub struct SqlCollectionByKeywordUrlEntry {
+    pub id: u32,
+    pub url: String,
+}
+
+#[derive(Serialize)]
+pub struct SqlCollectionByKeywordResponse {
+    pub collection_id: u32,
+    pub urls: Vec<SqlCollectionByKeywordUrlEntry>,
+}
+
 #[allow(dead_code)]
 impl SqlStigmarksDB {
-    fn get_keyword_id_by_name(self: &Self, keyword: &String) -> Result<u32, String> {
+    fn get_keyword_id_by_name(self: &Self, keyword: &String) -> Result<u32, Error> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_first(
             r"SELECT id FROM keywords where keyword=:keyword",
@@ -74,7 +88,7 @@ impl SqlStigmarksDB {
         }
     }
 
-    fn get_url_id_by_name(self: &Self, url: &String) -> Result<u32, String> {
+    fn get_url_id_by_name(self: &Self, url: &String) -> Result<u32, Error> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_first(
             r"SELECT id FROM urls where url=:url",
@@ -90,7 +104,7 @@ impl SqlStigmarksDB {
         }
     }
 
-    fn add_keyword(self: &Self, keyword: &String) -> Result<u32, String> {
+    fn add_keyword(self: &Self, keyword: &String) -> Result<u32, Error> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_drop(
             r"INSERT INTO keywords (keyword) VALUES (:keyword) ON DUPLICATE KEY UPDATE ref_count = ref_count + 1",
@@ -115,7 +129,7 @@ impl SqlStigmarksDB {
         }
     }
 
-    fn add_url(self: &Self, url: &String) -> Result<u32, String> {
+    fn add_url(self: &Self, url: &String) -> Result<u32, Error> {
         let lock = self.url_mutex.lock();
         if let Err(poison) = lock {
             return Err(format!("mutex poison: {}", poison));
@@ -174,7 +188,7 @@ impl SqlStigmarksDB {
         self: &Self,
         collection_id: u32,
         keyword_id: u32,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_drop(
             r"INSERT IGNORE INTO keyword_lists (collection_id, keyword_id) VALUES (:collection_id, :keyword_id)",
@@ -188,7 +202,7 @@ impl SqlStigmarksDB {
         }
     }
 
-    fn add_url_to_collection(self: &Self, collection_id: u32, url_id: u32) -> Result<(), String> {
+    fn add_url_to_collection(self: &Self, collection_id: u32, url_id: u32) -> Result<(), Error> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_drop(
             r"INSERT IGNORE INTO url_lists (collection_id, url_id) VALUES (:collection_id, :url_id)",
@@ -208,7 +222,7 @@ impl SqlStigmarksDB {
         created_by: u32,
         keywords: &Vec<String>,
         urls: &Vec<String>,
-    ) -> Result<u32, String> {
+    ) -> Result<u32, Error> {
         // create collection
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_drop(
@@ -267,7 +281,7 @@ impl SqlStigmarksDB {
     }
 
     // todo: -> Result<SqlCollection, Error>
-    pub fn get_collection_by_id(self: &Self, collection_id: u32) -> Result<SqlCollection, String> {
+    pub fn get_collection_by_id(self: &Self, collection_id: u32) -> Result<SqlCollection, Error> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_first(
             r"SELECT id, created_by, created_at, hidden_at, hidden_by FROM collections where id=:id",
@@ -292,7 +306,7 @@ impl SqlStigmarksDB {
     }
 
     // todo: -> Result<Vec<SqlCollection>, Error>
-    pub fn get_all_collections(self: &Self) -> Result<Vec<SqlCollection>, String> {
+    pub fn get_all_collections(self: &Self) -> Result<Vec<SqlCollection>, Error> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_map(
             r"SELECT id, created_by, created_at, hidden_at, hidden_by FROM collections",
@@ -315,7 +329,7 @@ impl SqlStigmarksDB {
         self: &Self,
         created_by: u32,
         _stigmer_id: u32,
-    ) -> Result<Vec<SqlCollectionPublic>, String> {
+    ) -> Result<Vec<SqlCollectionPublic>, Error> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_map(
             "   SELECT      C.id,
@@ -354,7 +368,7 @@ impl SqlStigmarksDB {
     pub fn get_collection_urls_by_id(
         self: &Self,
         collection_id: u32,
-    ) -> Result<Vec<String>, String> {
+    ) -> Result<Vec<String>, Error> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_map(
             r"SELECT url FROM urls, url_lists where url_lists.collection_id=:collection_id and urls.id=url_lists.url_id",
@@ -371,7 +385,7 @@ impl SqlStigmarksDB {
     pub fn get_collection_keywords_by_id(
         self: &Self,
         collection_id: u32,
-    ) -> Result<Vec<String>, String> {
+    ) -> Result<Vec<String>, Error> {
         let conn = &mut self.pool.get_conn().expect("sql: could not connect");
         match conn.exec_map(
             r"SELECT keyword FROM keywords, keyword_lists where keyword_lists.collection_id=:collection_id and keywords.id=keyword_lists.keyword_id",
@@ -383,5 +397,59 @@ impl SqlStigmarksDB {
             Ok(rows) => Ok(rows),
             Err(err) => Err(format!("{}", err)),
         }
+    }
+
+    pub fn get_collections_and_urls_by_keyword(
+        self: &Self,
+        keyword: String,
+    ) -> Result<Vec<SqlCollectionByKeywordResponse>, Error> {
+        let mut response: Vec<SqlCollectionByKeywordResponse> = vec!();
+
+        let conn = &mut self.pool.get_conn().expect("sql: could not connect");
+        match conn.exec_map(
+            r"SELECT id FROM keywords WHERE keywords.keyword=:keyword",
+            params! {
+                "keyword" => keyword,
+            },
+            |id: u32| id,
+        ) {
+            Ok(keyword_ids) => {
+                for keyword_id in keyword_ids {
+                    match conn.exec_map(
+                        r"SELECT collection_id FROM keyword_lists WHERE keyword_lists.keyword_id=:keyword_id",
+                        params! {
+                            "keyword_id" => keyword_id,
+                        },
+                        |collection_id: u32| collection_id,
+                    ) {
+                        Ok(collection_ids) => {
+                            for collection_id in collection_ids {
+                                match conn.exec_map(
+                                    r"SELECT U.id, U.url FROM url_lists L, urls U WHERE L.collection_id=:collection_id AND U.id=L.url_id",
+                                    params! {
+                                        "collection_id" => collection_id,
+                                    },
+                                    |(id, url)| SqlCollectionByKeywordUrlEntry{
+                                        id,
+                                        url,
+                                    },
+                                ) {
+                                    Ok(urls) => {
+                                        response.push(SqlCollectionByKeywordResponse{
+                                            collection_id,
+                                            urls,
+                                        });
+                                    },
+                                    Err(err) => return Err(format!("get_collections_by_keyword failed [1]: {}", err)),
+                                }
+                            }            
+                        },
+                        Err(err) => return Err(format!("get_collections_by_keyword failed [2]: {}", err))
+                    }            
+                }
+            },
+            Err(err) => return Err(format!("get_collections_by_keyword failed [3]: {}", err)),
+        }
+        Ok(response)
     }
 }

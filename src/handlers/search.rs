@@ -21,21 +21,13 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-/*
-use crate::jwtauth::JwtAuth;
+// use crate::jwtauth::JwtAuth;
 use crate::response::ServerResponse;
 use rocket::http::Status;
 use rocket::{Route, State};
 use rocket_contrib::json;
-use rocket_contrib::json::Json;
-use serde::Deserialize;
-
-#[derive(Deserialize)]
-struct SearchRequest {
-    urls: Vec<String>,
-    keys: Vec<String>,
-    token: Option<String>,
-}
+// use rocket_contrib::json::Json;
+// use serde::Deserialize;
 
 // OPTIONS https://stigmark.stigmee.com/api/v1/search
 #[options("/search", rank = 1)]
@@ -47,44 +39,24 @@ use stigmarks_sql_rs::sql::SqlStigmarksDB;
 
 // GET https://stigmark.stigmee.com/api/v1/search
 #[get("/search?<q>", rank = 1)]
-fn search_post(
-    auth: JwtAuth,
+fn search_get(
     state: State<SqlStigmarksDB>,
-    q: Option<u32>,
+    q: Option<String>,
 ) -> ServerResponse {
-    let mut user_id = 0u32;
-    if let Some(claims) = auth.claims {
-        user_id = claims.uid;
-    }
-    // We might need token from body
-    if user_id > 0 {
-        if let Some(token) = &mark.token {
-            if let Some(auth) = JwtAuth::new(token) {
-                if let Some(claims) = auth.claims {
-                    user_id = claims.uid;
-                }
-            }
-        }
-    }
-    if user_id == 0 {
-        println!("access denied");
-        return ServerResponse::error("expected token", Status::Forbidden);
-    }
     let stigmarks_db = state.inner();
-    if let Err(err) = stigmarks_db.get_user_by_id(user_id) {
-        println!("could not find user: {}", err);
-        return ServerResponse::error("user not found", Status::Forbidden);
+    if let None = q {
+        return ServerResponse::error(format!("no keyword"), Status::BadRequest);
     }
-    // todo: check if user is still active
-    let res = stigmarks_db.add_collection(user_id, &mark.keys, &mark.urls);
-    if let Err(err) = res {
-        eprintln!("add collection failed with: {}", err);
+
+    let response = stigmarks_db.get_collections_and_urls_by_keyword(q.unwrap());
+    if let Err(err) = response {
         return ServerResponse::error(err, Status::InternalServerError);
     }
-    ServerResponse::json(json!({"collection_id": res.unwrap()}), Status::Created)
+
+    let response = response.unwrap();
+    ServerResponse::json(json!(response), Status::Ok)
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![search_options, search_post]
+    routes![search_options, search_get]
 }
-*/
